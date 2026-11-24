@@ -29,7 +29,12 @@ export type StagePropType =
   | "edison-1878"
   | "vs-compare"
   | "ram-mosquito"
-  | "cta-comment";
+  | "cta-comment"
+  | "pc-no-signal"
+  | "cpu-igpu-office"
+  | "cpu-f-disabled"
+  | "igpu-two-secrets"
+  | "cpu-vs-cta";
 
 export type Expression =
   | "neutral"

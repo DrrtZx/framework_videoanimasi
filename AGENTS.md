@@ -65,19 +65,22 @@ out/
 
 > **Kebersihan Output**: File still preview sementara (`preview-*.png`, `still-*.png`) **wajib dihapus** setelah verifikasi visual lulus agar folder output hanya berisi aset final yang bersih.
 
+> **Aturan Git (WAJIB setiap kali video selesai dirender)**: Video/gambar hasil render (`out/`, `*.mp4`, `thumbnail*.png`, `preview-*.png`, `still-*.png`, `voiceover.*`) dan VO master (`public/audio/vo/`) **TIDAK BOLEH dikirim ke GitHub**. Setiap selesai render: (1) pastikan `.gitignore` sudah menutup semua file media baru (tambah pola bila ada jenis baru), (2) jalankan `git status --short` dan pastikan tidak ada file media berat yang ter-*stage*/untracked, (3) bila ada yang sudah ter-track, lepas dengan `git rm -r --cached <path>` sebelum commit/push.
+
 ---
 
 ## 3. Alur Kerja Wajib 2-Tahap (Voice-First Workflow)
 
 ### TAHAP 1 — Bahan Dulu (JANGAN RENDER!)
 1. Buat folder `out/<slug>/` atau `out/long/<slug>/`.
-2. Buat file `publikasi.md` berisi:
-   - 3 opsi judul click-worthy & ramah algoritma.
-   - Deskripsi video + URL sumber ilmiah terverifikasi (`https://...`).
-   - Hashtag relevan.
-   - Estimasi Chapter Timestamp (khusus Long Video).
+2. Buat file `publikasi.md` sesuai tipe konten (**Mode YT Shorts** atau **Mode YT Long Video**, mengacu ke Bagian 6) berisi:
+   - **Judul Utama Rekomendasi + 2 Opsi Alternatif** (mengikuti standar algoritma di Bagian 6 agar menembus ≥2.000 views & ≥20 likes).
+   - **Deskripsi Video Siap Copy-Paste** sesuai formatnya:
+     - **YT Shorts**: Deskripsi ringkas *mobile-first* tanpa URL eksternal mati + **4–6 hashtag** (ditutup `#shorts`). Simpan daftar URL sumber valid (`https://...`) di bagian terpisah *"Sumber & Referensi Riset"* di dalam `publikasi.md`.
+     - **YT Long Video**: Deskripsi lengkap SEO 5-lapis yang memuat 2 baris pembuka SEO, poin bahasan, **Estimasi Chapter Timestamp (`00:00`)**, **URL sumber ilmiah/teknis aktif (`https://...`)**, dan **3 hashtag utama** (tanpa `#shorts`).
+   - **Rekomendasi Pinned Comment** dan **YouTube Studio Tags**.
    - **Naskah Voice-Over Bersih untuk ElevenLabs**:
-     - **DILARANG memakai tag XML/kurung sudut** seperti `<curious>` atau `<shocked>` di dalam teks input ElevenLabs (karena akan terbaca secara harfiah oleh AI).
+     - **DILARANG memakai tag XML/kurung sudut** seperti `<curious>` atau `<shocked>` di dalam teks input ElevenLabs (karena akan terbaca secara harfiah oleh AI). Bila memakai `Eleven v3`, boleh menyediakan versi bertag kurung siku `[thoughtful]`, `[curious]`, dll. terpisah dari versi bersih `Eleven Multilingual v2`.
      - Atur emosi menggunakan **tanda baca alami** (`!`, `?`, `...`, `—`, huruf kapital penekanan).
      - Cantumkan rekomendasi Voice Settings ElevenLabs (Model: *Eleven Multilingual v2*, Stability: *35% – 45%*, Similarity: *75% – 85%*, Style Exaggeration: *15% – 25%*).
    - Berikan naskah versi utuh 1 blok dengan jeda `...` dan versi potong per scene/chapter.
@@ -113,6 +116,18 @@ out/
    # atau
    npm run render -- --type=long --episode=<slug>
    ```
+
+5. **Wajib Tampilkan Paket Siap Upload di Chat Setiap Selesai Render (WAJIB TANPA KECUALI — Bedakan Shorts vs Long Video)**:
+   - Setiap kali selesai menjalankan render final, AI Agent **WAJIB** menyinkronkan versi final `publikasi.md` lalu **menampilkan langsung di balasan chat** blok siap *copy-paste* sesuai tipe video yang dirender:
+     - **Jika Render YouTube Shorts (`--type=shorts`)**:
+       1. **Judul YT Shorts** (38–58 karakter inti, boleh diakhiri `#shorts`, + 2 opsi alternatif A/B test).
+       2. **Deskripsi Ringkas YT Shorts** (2–3 paragraf pendek padat kata kunci entitas + pertanyaan komentar, **TANPA URL eksternal `https://...`** karena link mati/tidak bisa diklik di Shorts, ditutup **4–6 hashtag** berakhiran `#shorts`).
+       3. **Pinned Comment** pemicu like/komentar (+ Studio Tags singkat opsional).
+     - **Jika Render YouTube Long / Normal Video (`--type=long`)**:
+       1. **Judul Long Video** (45–65 karakter, **TANPA hashtag sama sekali di judul**, + 2 opsi alternatif A/B test).
+       2. **Deskripsi Lengkap SEO Long Video** (2 baris *Above the Fold* SEO, ringkasan poin bahasan, **Chapter Timestamp final mulai `00:00`**, **daftar URL sumber valid `https://...` yang bisa diklik**, pertanyaan diskusi + CTA Subscribe, dan **3 hashtag utama** tanpa `#shorts`).
+       3. **Pinned Comment** & **YouTube Studio Tags** (8–12 frasa pencarian *long-tail* dipisah koma).
+   - **DILARANG** mencampur format deskripsi/hashtag Shorts dengan Long Video, dan **DILARANG** hanya menyuruh pengguna membuka `publikasi.md` sendiri tanpa menampilkan Judul + Deskripsi langsung di chat!
 
 ---
 
@@ -170,3 +185,63 @@ Video wajib hidup di setiap detik seperti animasi kartun panggung profesional (s
      - **Zona Pop-Out `Sfx`**: `top: 665px`, margin sisi minimal `115px` dari tepi kiri/kanan
      - **Zona Karakter `Jokowo` & Lantai 3D**: `bottom: 450px` (`Y ≈ 755px – 1410px`, garis cakrawala lantai panggung di `Y = 1395px`)
      - **Zona `Caption`**: `bottom: 380px` (`Y ≈ 1465px – 1540px`, dirender di luar layer zoom kamera)
+
+---
+
+## 6. Standar Algoritma Judul, Deskripsi & Hashtag: YT Shorts vs YT Long Video (Target ≥2.000 Views & ≥20 Likes)
+
+Berdasarkan sistem rekomendasi YouTube (*Creator Insider* — *Viewed vs. Swiped Away*, *CTR*, *Satisfaction*, & *Contextual Discovery*) serta benchmark kanal edukasi sains/teknologi Indonesia (rasio like sehat **1,3% – 4,5%** atau **26–90 likes per 2.000 penonton**), **format Deskripsi dan Cara Hashtag WAJIB DIBEDAKAN** antara **YouTube Shorts** dan **YouTube Long / Normal Video**:
+
+### A. Prinsip Dasar Judul & Gate Algoritma Awal (*Seed Audience Routing*)
+1. **Ketepatan Penonton Uji Awal (*Seed Pool* 500–2.500 Views)**:
+   - Pada jam pertama setelah upload, AI YouTube membaca **Judul + kalimat pembuka Deskripsi + Transkrip Audio (ASR) + Hashtag** untuk menentukan siapa 1.000–2.500 penonton uji pertama.
+   - **Wajib menaruh *Entity Keyword* utama di 4–5 kata pertama judul** (misal: `CPU iGPU vs Seri F`, `Rakit PC Layar Hitam`, `Cara Kerja Biodigester`) agar video diuji tepat ke peminat topik, bukan penonton acak yang langsung melewatkan video.
+2. **Format Penulisan & 4 Pola Judul Pemicu Klik/Like**:
+   - Gunakan **Title Case** bersih dan berwibawa (**DILARANG** HURUF KAPITAL SEMUA satu kalimat penuh; hanya singkatan teknis seperti `CPU`, `iGPU`, `VGA`, `RAM`, atau 1 kata penekanan pendek).
+   - Janji atau konflik di judul harus langsung terbukti di **0–3 detik pertama** video.
+   - Gunakan salah satu dari 4 pola terbukti:
+     1. **Paradoks / Kontra-Intuitif + Cara Kerja**: `[Entitas] Ternyata [Fakta Tak Terduga]? Begini Cara Kerjanya`
+     2. **Pertanyaan Relatable (`Kenapa...` / `...Gimana?`)**: `Rakit PC Kok Layar Hitam? Beda CPU iGPU vs Tanpa iGPU`
+     3. **Skala Angka + Pertanyaan Fungsi**: `[Angka Konkret] [Objek], Buat Apa? (Cara Kerja [Sistem])`
+     4. **Konflik Pilihan / Anti-Salah Beli**: `[Opsi A] vs [Opsi B]: Harga Beda Tipis, Fungsi Jauh Beda?`
+
+---
+
+### B. MODE 1 — Standar Khusus YOUTUBE SHORTS (9:16)
+Distribusi utama berasal dari **Shorts Feed** (layar vertikal HP) yang mengutamakan kecepatan baca, kecocokan topik *Seed Pool*, rasio *Viewed vs. Swiped Away* ≥70%–80%, dan komentar cepat.
+
+1. **Judul YT Shorts**:
+   - Panjang ideal: **38 – 58 karakter** untuk kalimat inti (maksimal ~65 karakter bila ditambah `#shorts` di ujung) agar **tidak terpotong (`...`)** di layar HP & Shorts Shelf.
+2. **Deskripsi YT Shorts (Ringkas, *Mobile-First* & Tanpa Link Mati)**:
+   - **DILARANG menaruh URL eksternal (`https://...`) di dalam blok Deskripsi Copy-Paste Shorts**, karena kebijakan resmi YouTube membuat link eksternal di deskripsi & komentar Shorts **tidak bisa diklik (*non-clickable*)** dan hanya memenuhi layar HP secara percuma. *(Simpan daftar URL sumber ilmiah/teknis valid di seksi terpisah dalam `publikasi.md` sebagai arsip riset & validasi fakta).*
+   - Buat **ringkas 2–3 paragraf pendek** (±250–550 karakter total):
+     - **Paragraf 1 (1–2 kalimat Hook Konteks)**: Ulangi konflik/masalah akrab + kata kunci entitas utama tanpa membocorkan twist akhir.
+     - **Paragraf 2 (1 kalimat Padatan Entitas)**: Rangkum komponen/istilah nyata yang dibedah di video (*"Dari [komponen A], [mekanisme B], sampai [fungsi rahasia C]..."*) untuk pengindeksan topik AI & pencarian Shorts.
+     - **Paragraf 3 (1 kalimat Pancingan Interaksi)**: Pertanyaan pilihan kubu/pengalaman singkat pemicu komentar & like (selaras dengan **Pinned Comment**).
+3. **Cara Hashtag YT Shorts**:
+   - **Di Judul**: Boleh menaruh **maksimal 1 hashtag `#shorts`** di paling akhir judul (opsional; **dilarang** menaruh hashtag topik banyak-banyak di judul karena memakan batas karakter judul di HP).
+   - **Di Baris Paling Bawah Deskripsi**: Wajib **4 – 6 hashtag spesifik** dalam satu baris dengan rumus:
+     - **2–3 hashtag entitas spesifik topik** (misal: `#rakitpc #igpu #prosesor`) → mengunci *Seed Audience* niche.
+     - **1–2 hashtag kategori** (`#teknologi`, `#sains`, `#edukasi`, atau `#faktaunik`).
+     - **1 hashtag format wajib**: `#shorts` (taruh paling ujung).
+   - **Larangan**: Dilarang spam >8–10 hashtag umum (`#fyp #viral #trending`) yang mengaburkan sinyal niche algoritma.
+
+---
+
+### C. MODE 2 — Standar Khusus YOUTUBE LONG / NORMAL VIDEO (16:9)
+Distribusi utama berasal dari **Home / Browse Features**, **Suggested Videos**, serta **YouTube & Google Search** yang sangat mengandalkan **CTR Thumbnail + Judul**, struktur SEO deskripsi panjang, navigasi *Chapters*, dan kredibilitas referensi.
+
+1. **Judul YT Long Video**:
+   - Panjang ideal: **45 – 65 karakter** (maksimal 70 karakter agar utuh di beranda desktop & mobile), saling melengkapi (*tidak mengulang teks persis*) dengan teks Thumbnail 16:9.
+   - **0 Hashtag di Judul**: **DILARANG** menaruh `#shorts` maupun hashtag apa pun di judul Long Video karena menurunkan CTR dan terlihat spammy di beranda YouTube.
+2. **Deskripsi YT Long Video (Lengkap 5-Lapis SEO + Chapter + Sumber Klik-Aktif)**:
+   - **Lapis 1 — *Above the Fold* SEO (2 Baris Awal / 120–160 Karakter Pertama)**: Muncul di hasil pencarian YouTube/Google sebelum tombol *"Lainnya / Show More"*. Wajib memuat **kata kunci pencarian utama (*primary search query*)** + janji pembahasan utama.
+   - **Lapis 2 — Ringkasan Mendalam & Bullet Points *Long-Tail***: 1 paragraf pengantar diikuti 3–5 poin peluru istilah/konsep teknis untuk menangkap trafik *YouTube Search* jangka panjang.
+   - **Lapis 3 — Chapter Timestamp Wajib (`00:00`)**: Wajib diawali `00:00`, minimal 3–8 chapter (durasi tiap chapter ≥10 detik) dengan judul chapter mengandung kata kunci agar muncul sebagai *Key Moments* di Google Search.
+   - **Lapis 4 — Link Sumber Ilmiah/Teknis Aktif (`https://...`) & CTA**: Karena link eksternal di deskripsi Long Video **bisa diklik penuh**, wajib cantumkan URL jurnal/dokumentasi resmi yang valid untuk membangun otoritas kanal, diikuti pertanyaan diskusi mendalam + ajakan Subscribe.
+   - **Lapis 5 — Baris Hashtag Long Video** (lihat aturan di bawah).
+3. **Cara Hashtag YT Long Video**:
+   - **Di Judul**: **0 hashtag** (bersih tanpa `#`).
+   - **Di Baris Paling Bawah Deskripsi**: Gunakan **tepat 3 hashtag paling relevan** (maksimal 3–5 hashtag topik/kategori, misal `#Prosesor #RakitPC #Teknologi`).
+   - **Alasan Algoritma & UI**: Pada video normal (16:9), YouTube mengambil **3 hashtag pertama dari deskripsi untuk ditampilkan sebagai tautan aktif tepat di atas/dekat judul video**. Karena itu, pilih hanya 3 kata kunci topik paling presisi — dan **HARAM mencantumkan `#shorts`** pada Long Video agar tidak salah diklasifikasikan sistem.
+   - **YouTube Studio Tags**: Wajib isi **8–12 frasa pencarian *long-tail*** & variasi sinonim/salah ketik (dipisah koma, total <400 karakter).

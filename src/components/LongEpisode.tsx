@@ -5,9 +5,9 @@ import { LongAudioMix } from "../lib/long-audio-mix";
 import { getSfxStaticPath } from "../lib/sfx-events";
 import type { LongEpisodeData } from "../episodes/long-types";
 
-export interface LongEpisodeProps {
+export type LongEpisodeProps = {
   episode: LongEpisodeData;
-}
+};
 
 export const LongEpisode: React.FC<LongEpisodeProps> = ({ episode }) => {
   let accumulatedFrame = 0;

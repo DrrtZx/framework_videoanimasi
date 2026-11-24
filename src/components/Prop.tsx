@@ -13,7 +13,9 @@ export type PropType =
   | "flask"
   | "atom"
   | "moth"
-  | "relay";
+  | "relay"
+  | "cpu"
+  | "gpu";
 
 export interface PropProps {
   type: PropType;
@@ -184,6 +186,51 @@ export const Prop: React.FC<PropProps> = ({
             <ellipse cx="50" cy="50" rx="38" ry="14" fill="none" stroke={PALETTE.ink} strokeWidth="3" transform="rotate(30 50 50)" />
             <ellipse cx="50" cy="50" rx="38" ry="14" fill="none" stroke={PALETTE.ink} strokeWidth="3" transform="rotate(-30 50 50)" />
             <circle cx="78" cy="35" r="4" fill={PALETTE.accentYellow} />
+          </g>
+        );
+
+      case "cpu":
+        return (
+          <g>
+            {/* Pin Emas Sekeliling Chip */}
+            {[26, 38, 50, 62, 74].map((p) => (
+              <g key={p}>
+                <rect x={p - 2} y="10" width="4" height="10" rx="1.5" fill="#FACC15" />
+                <rect x={p - 2} y="80" width="4" height="10" rx="1.5" fill="#FACC15" />
+                <rect x="10" y={p - 2} width="10" height="4" rx="1.5" fill="#FACC15" />
+                <rect x="80" y={p - 2} width="10" height="4" rx="1.5" fill="#FACC15" />
+              </g>
+            ))}
+            {/* Substrate PCB Hijau-Biru & IHS Silver */}
+            <rect x="18" y="18" width="64" height="64" rx="10" fill="#0EA5E9" stroke={PALETTE.ink} strokeWidth="4" />
+            <rect x="27" y="27" width="46" height="46" rx="6" fill="#E2E8F0" stroke={PALETTE.ink} strokeWidth="3.5" />
+            <rect x="33" y="33" width="34" height="16" rx="4" fill="#1E293B" />
+            <text x="50" y="45" fontSize="11" fontWeight="900" fill="#00F5FF" textAnchor="middle">CPU</text>
+            <rect x="33" y="53" width="34" height="14" rx="4" fill="#FACC15" stroke={PALETTE.ink} strokeWidth="2" />
+            <text x="50" y="64" fontSize="10" fontWeight="900" fill="#0F172A" textAnchor="middle">iGPU</text>
+          </g>
+        );
+
+      case "gpu":
+        return (
+          <g>
+            {/* Bracket & Connector PCIe */}
+            <rect x="10" y="22" width="8" height="56" rx="3" fill="#94A3B8" stroke={PALETTE.ink} strokeWidth="3" />
+            <rect x="24" y="74" width="40" height="8" rx="2" fill="#FACC15" stroke={PALETTE.ink} strokeWidth="2.5" />
+            {/* Shroud Kartu Grafis */}
+            <rect x="16" y="26" width="76" height="48" rx="8" fill="#1E293B" stroke={PALETTE.ink} strokeWidth="4" />
+            {/* Kipas Ganda Berputar */}
+            {[36, 70].map((cx) => (
+              <g key={cx}>
+                <circle cx={cx} cy="50" r="14" fill="#0F172A" stroke="#38BDF8" strokeWidth="2.5" />
+                <g transform={`rotate(${(frame * 10) % 360} ${cx} 50)`}>
+                  <line x1={cx - 10} y1="50" x2={cx + 10} y2="50" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+                  <line x1={cx} y1="40" x2={cx} y2="60" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+                </g>
+                <circle cx={cx} cy="50" r="4" fill="#FACC15" />
+              </g>
+            ))}
+            <rect x="22" y="28" width="64" height="4" rx="2" fill="#F43F5E" />
           </g>
         );
 

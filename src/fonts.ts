@@ -2,10 +2,14 @@ import { loadFont as loadFredoka } from "@remotion/google-fonts/Fredoka";
 import { loadFont as loadPlusJakartaSans } from "@remotion/google-fonts/PlusJakartaSans";
 
 export const fredokaFont = loadFredoka("normal", {
+  weights: ["500", "600", "700"],
+  subsets: ["latin"],
   ignoreTooManyRequestsWarning: true,
 });
 
 export const plusJakartaSansFont = loadPlusJakartaSans("normal", {
+  weights: ["500", "600", "700", "800"],
+  subsets: ["latin"],
   ignoreTooManyRequestsWarning: true,
 });
 

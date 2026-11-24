@@ -6,6 +6,19 @@ out/
 dist/
 build/
 .remotion/
+referensi/videos/
+
+# Hasil render final & aset media berat (jangan pernah masuk GitHub)
+out/
+*.mp4
+*.mov
+*.webm
+*.mkv
+preview-*.png
+still-*.png
+thumbnail*.png
+voiceover.*
+public/audio/vo/
 
 # Environment & Logs
 .env

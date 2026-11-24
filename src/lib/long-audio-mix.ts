@@ -177,17 +177,14 @@ export const LongAudioMix: React.FC<LongAudioMixProps> = ({
   // 3. Background Music dengan Auto-Ducking Real-Time
   if (bgmSrc) {
     children.push(
-      React.createElement(
-        Loop,
-        {
-          key: "long-bgm-loop",
-          durationInFrames: Math.max(1, durationInFrames),
-        },
-        React.createElement(Audio, {
+      React.createElement(Loop, {
+        key: "long-bgm-loop",
+        durationInFrames: Math.max(1, durationInFrames),
+        children: React.createElement(Audio, {
           src: bgmSrc,
           volume: bgmVolume,
-        })
-      )
+        }),
+      })
     );
   }
 

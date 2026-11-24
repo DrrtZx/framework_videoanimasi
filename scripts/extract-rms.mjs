@@ -1,8 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const wavPath = path.resolve(process.cwd(), "public/audio/vo/asal-usul-bug-vo.wav");
-const outPath = path.resolve(process.cwd(), "src/episodes/asal-usul-bug-rms.ts");
+const wavArg = process.argv[2] || "public/audio/vo/asal-usul-bug-vo.wav";
+const outArg = process.argv[3] || "src/episodes/asal-usul-bug-rms.ts";
+const exportName = process.argv[4] || "ASAL_USUL_BUG_RMS";
+
+const wavPath = path.resolve(process.cwd(), wavArg);
+const outPath = path.resolve(process.cwd(), outArg);
 
 const buf = fs.readFileSync(wavPath);
 let dataOffset = 44;
@@ -44,9 +48,9 @@ const normalized = rawRms.map((r) => {
   return Math.round(norm * 100);
 });
 
-const tsContent = `// Auto-generated 30fps normalized RMS amplitude (0-100) from public/audio/vo/asal-usul-bug-vo.wav
+const tsContent = `// Auto-generated 30fps normalized RMS amplitude (0-100) from ${wavArg}
 // Used for deterministic frame-accurate lip-sync and audio-reactive HUD animation.
-export const ASAL_USUL_BUG_RMS: readonly number[] = [
+export const ${exportName}: readonly number[] = [
 ${normalized.join(",")}
 ];
 `;

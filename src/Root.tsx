@@ -8,10 +8,16 @@ import { LongThumbnail } from "./components/LongThumbnail";
 import { ChannelBanner } from "./components/ChannelBanner";
 import { ChannelAvatar } from "./components/ChannelAvatar";
 import { episodeAsalUsulBug } from "./episodes/episode-asal-usul-bug";
+import { episodeCpuIgpuVsNonIgpu } from "./episodes/episode-cpu-igpu-vs-non-igpu";
 import { sampleShortsEpisode } from "./episodes/sample-shorts";
 import { sampleLongEpisode } from "./episodes/sample-long";
 
 export const RemotionRoot: React.FC = () => {
+  const cpuIgpuDuration = episodeCpuIgpuVsNonIgpu.scenes.reduce(
+    (acc, sc) => acc + sc.durationInFrames,
+    0
+  );
+
   const asalUsulBugDuration = episodeAsalUsulBug.scenes.reduce(
     (acc, sc) => acc + sc.durationInFrames,
     0
@@ -24,9 +30,37 @@ export const RemotionRoot: React.FC = () => {
 
   return (
     <>
-      {/* 1. YouTube Shorts Aktif: Asal Usul Bug (9:16 - 1080x1920) */}
+      {/* 1. YouTube Shorts Aktif: CPU iGPU vs Non-iGPU (9:16 - 1080x1920) */}
       <Composition
         id="ShortsEpisode"
+        component={Episode}
+        durationInFrames={cpuIgpuDuration || 1979}
+        fps={SHORTS_CONFIG.fps}
+        width={SHORTS_CONFIG.width}
+        height={SHORTS_CONFIG.height}
+        defaultProps={{
+          episode: episodeCpuIgpuVsNonIgpu,
+        }}
+      />
+
+      {/* 2. YouTube Shorts Thumbnail Aktif (1080x1920) */}
+      <Composition
+        id="ShortsThumbnail"
+        component={Thumbnail}
+        durationInFrames={1}
+        fps={SHORTS_CONFIG.fps}
+        width={SHORTS_CONFIG.width}
+        height={SHORTS_CONFIG.height}
+        defaultProps={{
+          title: "CPU iGPU VS TANPA iGPU!",
+          subtitle: "JANGAN SALAH BELI!",
+          floatingProps: ["cpu", "gpu", "question-mark", "lightbulb"],
+        }}
+      />
+
+      {/* 3. YouTube Shorts Arsip: Asal Usul Bug */}
+      <Composition
+        id="ShortsAsalUsulBug"
         component={Episode}
         durationInFrames={asalUsulBugDuration || 1722}
         fps={SHORTS_CONFIG.fps}
@@ -37,21 +71,7 @@ export const RemotionRoot: React.FC = () => {
         }}
       />
 
-      {/* 2. YouTube Shorts Thumbnail (1080x1920) */}
-      <Composition
-        id="ShortsThumbnail"
-        component={Thumbnail}
-        durationInFrames={1}
-        fps={SHORTS_CONFIG.fps}
-        width={SHORTS_CONFIG.width}
-        height={SHORTS_CONFIG.height}
-        defaultProps={{
-          title: "KENAPA ERROR KOMPUTER DISEBUT BUG?",
-          subtitle: "GARA-GARA HEWAN INI!",
-        }}
-      />
-
-      {/* 3. YouTube Shorts Sample Alternatif */}
+      {/* 4. YouTube Shorts Sample Alternatif */}
       <Composition
         id="ShortsSampleEpisode"
         component={Episode}

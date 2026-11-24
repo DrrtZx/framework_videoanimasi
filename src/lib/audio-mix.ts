@@ -60,17 +60,14 @@ export const ShortsAudioMix: React.FC<ShortsAudioMixProps> = ({
   // 3. Background Music Loop (10% - 15% Volume)
   if (bgmSrc) {
     children.push(
-      React.createElement(
-        Loop,
-        {
-          key: "bgm-loop",
-          durationInFrames: Math.max(1, durationInFrames),
-        },
-        React.createElement(Audio, {
+      React.createElement(Loop, {
+        key: "bgm-loop",
+        durationInFrames: Math.max(1, durationInFrames),
+        children: React.createElement(Audio, {
           src: bgmSrc,
           volume: AUDIO_LEVELS.bgmNormal,
-        })
-      )
+        }),
+      })
     );
   }
 

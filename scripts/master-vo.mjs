@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, unlinkSync } from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import ffmpegPath from "ffmpeg-static";
 
 /**
@@ -16,6 +16,13 @@ const WARM_BASS_FILTER =
   "equalizer=f=5500:t=q:w=1.5:g=-3.0," +
   "acompressor=threshold=-18dB:ratio=3:attack=10:release=100," +
   "loudnorm=I=-16:TP=-1.5:LRA=11";
+
+function resolveFfmpegBin() {
+  if (typeof ffmpegPath === "string" && existsSync(ffmpegPath)) {
+    return ffmpegPath;
+  }
+  return "ffmpeg";
+}
 
 function main() {
   const args = process.argv.slice(2);
@@ -46,6 +53,13 @@ function main() {
 
   const baseName = args[1] || `${path.basename(inputPath, path.extname(inputPath))}-mastered.wav`;
   const outputPath = path.join(outDir, baseName.endsWith(".wav") ? baseName : `${baseName}.wav`);
+  const samePath =
+    process.platform === "win32"
+      ? inputPath.toLowerCase() === outputPath.toLowerCase()
+      : inputPath === outputPath;
+  const tempOutputPath = `${outputPath}.tmp.wav`;
+  const targetWritePath = samePath ? tempOutputPath : outputPath;
+  const ffmpegBin = resolveFfmpegBin();
 
   console.log(`[master-vo] Memproses: ${inputPath}`);
   console.log(`[master-vo] Output: ${outputPath}`);
@@ -64,13 +78,16 @@ function main() {
       "1",
       "-c:a",
       "pcm_s16le",
-      outputPath,
+      targetWritePath,
     ];
 
-    execFileSync(ffmpegPath, ffmpegArgs, { stdio: "inherit" });
+    execFileSync(ffmpegBin, ffmpegArgs, { stdio: "inherit" });
+    if (samePath) {
+      renameSync(tempOutputPath, outputPath);
+    }
     console.log(`[master-vo] BERHASIL! Audio master disimpan di: ${outputPath}`);
 
-    // Jalankan silencedetect untuk informasi sinkronisasi
+    // Jalankan silencedetect untuk informasi sinkronisasi (FFmpeg menulis log filter ke stderr)
     console.log(`[master-vo] Menganalisis jeda bicara (silencedetect)...`);
     const detectArgs = [
       "-i",
@@ -81,13 +98,34 @@ function main() {
       "null",
       "-",
     ];
-    const detectOutput = execFileSync(ffmpegPath, detectArgs, { encoding: "utf8" });
-    console.log("[master-vo] Analisis keheningan selesai:");
+    const detectResult = spawnSync(ffmpegBin, detectArgs, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (detectResult.error) {
+      throw detectResult.error;
+    }
+    if (detectResult.status !== 0) {
+      throw new Error(
+        `silencedetect keluar dengan kode ${detectResult.status}: ${detectResult.stderr || ""}`
+      );
+    }
+
+    const detectOutput = `${detectResult.stdout ?? ""}\n${detectResult.stderr ?? ""}`;
     const silenceLines = detectOutput
-      .split("\n")
-      .filter((l) => l.includes("silence_start") || l.includes("silence_end"));
-    console.log(silenceLines.slice(0, 10).join("\n") || "Tidak ada hening panjang terdeteksi.");
+      .split(/[\r\n]+/)
+      .filter((l) => l.includes("silence_start") || l.includes("silence_end"))
+      .map((l) => l.trim());
+    console.log(`[master-vo] Analisis keheningan selesai (${silenceLines.length} baris):`);
+    console.log(silenceLines.join("\n") || "Tidak ada hening panjang terdeteksi.");
   } catch (error) {
+    if (samePath && existsSync(tempOutputPath)) {
+      try {
+        unlinkSync(tempOutputPath);
+      } catch {
+        // Abaikan kegagalan pembersihan file sementara
+      }
+    }
     console.error("[master-vo] Gagal memproses audio:", error.message);
     process.exit(1);
   }

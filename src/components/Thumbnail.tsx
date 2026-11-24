@@ -2,17 +2,20 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { Jokowo } from "./Jokowo";
 import { Prop } from "./Prop";
+import type { PropType } from "./Prop";
 import { PALETTE } from "../config";
 import { FONTS } from "../fonts";
 
 export interface ThumbnailProps {
   title?: string;
   subtitle?: string;
+  floatingProps?: [PropType, PropType, PropType, PropType];
 }
 
 export const Thumbnail: React.FC<ThumbnailProps> = ({
   title = "KENAPA ERROR KOMPUTER DISEBUT BUG?",
   subtitle = "KASUS NYATA 1947!",
+  floatingProps = ["moth", "relay", "question-mark", "lightbulb"],
 }) => {
   return (
     <AbsoluteFill
@@ -56,16 +59,16 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 
       {/* Floating Props Blueprint */}
       <div style={{ position: "absolute", top: "540px", left: "80px", zIndex: 35 }}>
-        <Prop type="moth" size={200} animate={false} />
+        <Prop type={floatingProps[0]} size={200} animate={false} />
       </div>
       <div style={{ position: "absolute", top: "540px", right: "80px", zIndex: 35 }}>
-        <Prop type="relay" size={190} animate={false} />
+        <Prop type={floatingProps[1]} size={190} animate={false} />
       </div>
       <div style={{ position: "absolute", top: "900px", left: "60px", zIndex: 35 }}>
-        <Prop type="question-mark" size={160} animate={false} />
+        <Prop type={floatingProps[2]} size={160} animate={false} />
       </div>
       <div style={{ position: "absolute", top: "900px", right: "60px", zIndex: 35 }}>
-        <Prop type="lightbulb" size={150} animate={false} />
+        <Prop type={floatingProps[3]} size={150} animate={false} />
       </div>
 
       {/* Judul Besar Menarik di Atas */}

@@ -19,9 +19,9 @@ import { getSfxStaticPath } from "../lib/sfx-events";
 import type { EpisodeData, Scene as SceneData, Pose } from "../episodes/types";
 import type { PropType } from "./Prop";
 
-export interface EpisodeProps {
+export type EpisodeProps = {
   episode: EpisodeData;
-}
+};
 
 export const Episode: React.FC<EpisodeProps> = ({ episode }) => {
   let accumulatedFrame = 0;

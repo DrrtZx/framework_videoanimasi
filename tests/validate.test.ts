@@ -3,6 +3,7 @@ import { validateEpisode } from "../src/episodes/validate";
 import { validateLongEpisode } from "../src/episodes/long-validate";
 import { sampleShortsEpisode } from "../src/episodes/sample-shorts";
 import { episodeAsalUsulBug } from "../src/episodes/episode-asal-usul-bug";
+import { episodeCpuIgpuVsNonIgpu } from "../src/episodes/episode-cpu-igpu-vs-non-igpu";
 import { sampleLongEpisode } from "../src/episodes/sample-long";
 import type { EpisodeData } from "../src/episodes/types";
 import type { LongEpisodeData } from "../src/episodes/long-types";
@@ -18,6 +19,16 @@ describe("Validasi Episode Shorts", () => {
     const res = validateEpisode(episodeAsalUsulBug);
     expect(res.valid).toBe(true);
     expect(res.errors).toHaveLength(0);
+  });
+
+  it("harus meloloskan episodeCpuIgpuVsNonIgpu dengan durasi beat sinkron", () => {
+    const res = validateEpisode(episodeCpuIgpuVsNonIgpu);
+    expect(res.valid).toBe(true);
+    expect(res.errors).toHaveLength(0);
+    episodeCpuIgpuVsNonIgpu.scenes.forEach((sc) => {
+      const beatSum = sc.beats.reduce((acc, b) => acc + (b.durationInFrames ?? 0), 0);
+      expect(beatSum).toBe(sc.durationInFrames);
+    });
   });
 
   it("harus menolak jika scene pertama bukan HOOK", () => {

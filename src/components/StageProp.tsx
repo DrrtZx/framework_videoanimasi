@@ -1090,6 +1090,521 @@ export const StageProp: React.FC<StagePropProps> = ({
         );
       }
 
+      /* =====================================================================
+         14. PC NO SIGNAL (Hook CPU iGPU vs Non-iGPU: PC nyala tapi layar hitam!)
+         ===================================================================== */
+      case "pc-no-signal": {
+        const isBlackout = variant === "blackout" || variant === "no-igpu";
+        const isNoIgpu = variant === "no-igpu";
+        const fanAngle = (globalFrame * 16) % 360;
+        const cableSlide = Math.min(1, propFrame / 20);
+        const cableX = interpolate(cableSlide, [0, 1], [-35, 0]);
+        const alertPop = isBlackout
+          ? spring({ frame: beatFrame, fps, config: { damping: 10, stiffness: 220 } })
+          : 0;
+        const chipPop = isNoIgpu
+          ? spring({ frame: beatFrame, fps, config: { damping: 11, stiffness: 200 } })
+          : 0;
+        const powerPulse = 0.5 + 0.5 * Math.sin(t * 8);
+
+        return (
+          <g>
+            {/* Casing PC Blueprint di Kiri */}
+            <rect x="75" y="70" width="235" height="310" rx="18" fill="#0F172A" stroke="#38BDF8" strokeWidth="5" />
+            <rect x="93" y="92" width="199" height="190" rx="12" fill="#082F49" stroke="#0EA5E9" strokeWidth="3" />
+            {/* Motherboard & Soket CPU */}
+            <rect x="115" y="108" width="110" height="115" rx="8" fill="#1E293B" stroke="#38BDF8" strokeWidth="2.5" />
+            <rect x="142" y="128" width="54" height="54" rx="6" fill="#0EA5E9" stroke="#FACC15" strokeWidth="3" />
+            <text x="169" y="160" fontFamily={FONTS.label} fontSize="16" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU</text>
+            {/* Port HDMI Motherboard */}
+            <rect x="262" y="145" width="32" height="22" rx="4" fill="#334155" stroke="#38BDF8" strokeWidth="2.5" />
+
+            {/* Kipas PC Berputar Kencang */}
+            <circle cx="150" cy="330" r="36" fill="#1E293B" stroke="#00F5FF" strokeWidth="4" />
+            <g transform={`rotate(${fanAngle} 150 330)`}>
+              <path d="M 150 300 C 165 305, 165 325, 150 330 C 135 325, 135 305, 150 300 Z" fill="#38BDF8" />
+              <path d="M 180 330 C 175 345, 155 345, 150 330 C 155 315, 175 315, 180 330 Z" fill="#38BDF8" />
+              <path d="M 150 360 C 135 355, 135 335, 150 330 C 165 335, 165 355, 150 360 Z" fill="#38BDF8" />
+              <path d="M 120 330 C 125 315, 145 315, 150 330 C 145 345, 125 345, 120 330 Z" fill="#38BDF8" />
+            </g>
+            <circle cx="150" cy="330" r="8" fill="#FACC15" stroke="#0F172A" strokeWidth="2.5" />
+
+            {/* Tombol Power Berpendar */}
+            <circle cx="245" cy="330" r="20" fill="#10B981" fillOpacity={0.25 + powerPulse * 0.55} stroke="#10B981" strokeWidth="3.5" />
+            <path d="M 245 319 L 245 329 M 237 324 A 10 10 0 1 0 253 324" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+
+            {/* Kabel HDMI Terhubung dari Motherboard ke Monitor */}
+            <g transform={`translate(${cableX}, 0)`}>
+              <path d="M 294 156 C 350 156, 355 245, 415 245" fill="none" stroke="#FACC15" strokeWidth="8" strokeLinecap="round" />
+              <rect x="292" y="146" width="22" height="20" rx="3" fill="#FACC15" stroke="#0F172A" strokeWidth="3" />
+              <text x="348" y="138" fontFamily={FONTS.label} fontSize="15" fontWeight="800" fill="#FACC15" textAnchor="middle">HDMI</text>
+            </g>
+
+            {/* Monitor di Kanan */}
+            <rect x="415" y="82" width="315" height="225" rx="16" fill="#1E293B" stroke={isBlackout ? "#F43F5E" : "#38BDF8"} strokeWidth="6" />
+            <rect x="431" y="98" width="283" height="183" rx="8" fill={isBlackout ? "#020617" : "#0F172A"} stroke="#334155" strokeWidth="3" />
+            {/* Kaki Monitor */}
+            <rect x="550" y="307" width="44" height="45" fill="#334155" stroke="#0F172A" strokeWidth="3" />
+            <rect x="495" y="348" width="154" height="18" rx="9" fill="#475569" stroke="#0F172A" strokeWidth="3" />
+
+            {!isBlackout ? (
+              <g>
+                <circle cx="572" cy="190" r="24" fill="none" stroke="#38BDF8" strokeWidth="5" strokeDasharray="36 16" transform={`rotate(${(globalFrame * 9) % 360} 572 190)`} />
+                <text x="572" y="244" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#38BDF8" textAnchor="middle">MENYALAKAN...</text>
+              </g>
+            ) : !isNoIgpu ? (
+              <g transform={`translate(572, 190) scale(${alertPop}) translate(-572, -190)`}>
+                <rect x="462" y="142" width="220" height="96" rx="14" fill="#4C0519" stroke="#F43F5E" strokeWidth="4" />
+                <text x="572" y="182" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#FACC15" textAnchor="middle">NO SIGNAL</text>
+                <text x="572" y="216" fontFamily={FONTS.label} fontSize="19" fontWeight="800" fill="#FFFFFF" textAnchor="middle">LAYAR HITAM!</text>
+              </g>
+            ) : (
+              <g transform={`translate(572, 190) scale(${chipPop}) translate(-572, -190)`}>
+                <rect x="455" y="130" width="234" height="118" rx="16" fill="#1E1B4B" stroke="#FACC15" strokeWidth="4.5" />
+                <text x="572" y="174" fontFamily={FONTS.title} fontSize="34" fontWeight="900" fill="#F43F5E" textAnchor="middle">NO iGPU!</text>
+                <text x="572" y="216" fontFamily={FONTS.label} fontSize="20" fontWeight="800" fill="#E0F2FE" textAnchor="middle">CPU TANPA GRAFIS</text>
+              </g>
+            )}
+          </g>
+        );
+      }
+
+      /* =====================================================================
+         15. CPU iGPU OFFICE (2 Pekerja di 1 Kantor -> RAM -> Layar Nyala)
+         ===================================================================== */
+      case "cpu-igpu-office": {
+        const isTwoWorkers = variant === "two-workers" || variant === "ram-display";
+        const isRamDisplay = variant === "ram-display";
+        const gearRot = (globalFrame * 4) % 360;
+        const packetX = ((propFrame * 8) % 210);
+        const checkPop = isRamDisplay
+          ? spring({ frame: beatFrame, fps, config: { damping: 10, stiffness: 210 } })
+          : 0;
+
+        if (!isTwoWorkers) {
+          // Variant "compare-q": Perbandingan awal CPU + iGPU vs Tanpa iGPU
+          return (
+            <g>
+              {/* Kiri: CPU + iGPU */}
+              <rect x="90" y="95" width="250" height="260" rx="22" fill="#0F172A" stroke="#00F5FF" strokeWidth="6" />
+              <rect x="118" y="122" width="194" height="90" rx="12" fill="#0284C7" stroke="#E0F2FE" strokeWidth="3" />
+              <text x="215" y="177" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
+              <rect x="118" y="232" width="194" height="92" rx="12" fill="#10B981" stroke="#FEF08A" strokeWidth="4" />
+              <text x="215" y="274" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#0F172A" textAnchor="middle">+ iGPU</text>
+              <text x="215" y="306" fontFamily={FONTS.label} fontSize="17" fontWeight="800" fill="#ECFDF5" textAnchor="middle">ADA GRAFIS</text>
+
+              {/* Tengah: VS / ? */}
+              <circle cx="400" cy="225" r="42" fill="#FACC15" stroke="#0F172A" strokeWidth="5" />
+              <text x="400" y="238" fontFamily={FONTS.title} fontSize="42" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
+
+              {/* Kanan: CPU Tanpa iGPU */}
+              <rect x="460" y="95" width="250" height="260" rx="22" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
+              <rect x="488" y="122" width="194" height="90" rx="12" fill="#334155" stroke="#94A3B8" strokeWidth="3" />
+              <text x="585" y="177" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
+              <rect x="488" y="232" width="194" height="92" rx="12" fill="#1E293B" stroke="#F43F5E" strokeWidth="3.5" strokeDasharray="10 8" />
+              <text x="585" y="276" fontFamily={FONTS.title} fontSize="26" fontWeight="900" fill="#FB7185" textAnchor="middle">TANPA iGPU</text>
+              <text x="585" y="306" fontFamily={FONTS.label} fontSize="17" fontWeight="800" fill="#94A3B8" textAnchor="middle">KOSONG</text>
+            </g>
+          );
+        }
+
+        if (!isRamDisplay) {
+          // Variant "two-workers": 1 Kantor CPU dengan 2 Pekerja (Logika + Mini-GPU)
+          return (
+            <g>
+              {/* Die Chip sebagai Kantor */}
+              <rect x="80" y="55" width="640" height="340" rx="26" fill="#0F172A" stroke="#38BDF8" strokeWidth="6" />
+              <rect x="245" y="35" width="310" height="44" rx="14" fill="#38BDF8" stroke="#0F172A" strokeWidth="4" />
+              <text x="400" y="65" fontFamily={FONTS.title} fontSize="24" fontWeight="900" fill="#0F172A" textAnchor="middle">1 CHIP CPU = 1 KANTOR</text>
+
+              {/* Ruang Kerja 1: Logika (CPU Core) */}
+              <rect x="115" y="102" width="265" height="265" rx="18" fill="#082F49" stroke="#38BDF8" strokeWidth="4" />
+              <text x="247" y="144" fontFamily={FONTS.title} fontSize="26" fontWeight="900" fill="#FFFFFF" textAnchor="middle">PEKERJA 1: LOGIKA</text>
+              {/* Roda Gigi Berputar */}
+              <g transform={`translate(215, 240) rotate(${gearRot})`}>
+                <circle cx="0" cy="0" r="42" fill="#38BDF8" stroke="#0F172A" strokeWidth="4" />
+                {[0, 45, 90, 135].map((a) => (
+                  <rect key={a} x="-10" y="-54" width="20" height="108" rx="4" fill="#38BDF8" stroke="#0F172A" strokeWidth="3" transform={`rotate(${a})`} />
+                ))}
+                <circle cx="0" cy="0" r="18" fill="#0F172A" />
+              </g>
+              <g transform={`translate(302, 290) rotate(${-gearRot * 1.4})`}>
+                <circle cx="0" cy="0" r="28" fill="#818CF8" stroke="#0F172A" strokeWidth="4" />
+                {[0, 60, 120].map((a) => (
+                  <rect key={a} x="-7" y="-36" width="14" height="72" rx="3" fill="#818CF8" stroke="#0F172A" strokeWidth="2.5" transform={`rotate(${a})`} />
+                ))}
+                <circle cx="0" cy="0" r="10" fill="#0F172A" />
+              </g>
+
+              {/* Ruang Kerja 2: Mini-GPU (iGPU) */}
+              <rect x="420" y="102" width="265" height="265" rx="18" fill="#064E3B" stroke="#10B981" strokeWidth="4" />
+              <text x="552" y="144" fontFamily={FONTS.title} fontSize="26" fontWeight="900" fill="#FACC15" textAnchor="middle">PEKERJA 2: MINI-GPU</text>
+              {/* Grid Piksel Cetak Gambar */}
+              {[0, 1, 2].map((r) =>
+                [0, 1, 2, 3].map((c) => {
+                  const idx = r * 4 + c;
+                  const active = (Math.floor(globalFrame / 5) + idx) % 4 === 0;
+                  const colors = ["#00F5FF", "#FACC15", "#FB7185", "#34D399"];
+                  return (
+                    <rect
+                      key={`${r}-${c}`}
+                      x={465 + c * 46}
+                      y={175 + r * 46}
+                      width="36"
+                      height="36"
+                      rx="6"
+                      fill={active ? colors[idx % 4] : "#1E293B"}
+                      stroke="#E2E8F0"
+                      strokeWidth="2.5"
+                    />
+                  );
+                })
+              )}
+              <text x="552" y="346" fontFamily={FONTS.label} fontSize="19" fontWeight="800" fill="#A7F3D0" textAnchor="middle">CETAK GAMBAR KE LAYAR</text>
+            </g>
+          );
+        }
+
+        // Variant "ram-display": iGPU -> System RAM -> Monitor Nyala!
+        return (
+          <g>
+            {/* Kiri: Blok CPU + iGPU */}
+            <rect x="60" y="110" width="170" height="225" rx="18" fill="#0F172A" stroke="#38BDF8" strokeWidth="5" />
+            <rect x="78" y="130" width="134" height="78" rx="10" fill="#1E293B" stroke="#38BDF8" strokeWidth="2.5" />
+            <text x="145" y="177" fontFamily={FONTS.title} fontSize="24" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU</text>
+            <rect x="78" y="224" width="134" height="90" rx="10" fill="#10B981" stroke="#FACC15" strokeWidth="4" />
+            <text x="145" y="278" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#0F172A" textAnchor="middle">iGPU</text>
+
+            {/* Tengah: Stick RAM Komputer */}
+            <rect x="290" y="145" width="160" height="150" rx="14" fill="#1E1B4B" stroke="#FACC15" strokeWidth="5" />
+            <text x="370" y="185" fontFamily={FONTS.title} fontSize="25" fontWeight="900" fill="#FACC15" textAnchor="middle">RAM</text>
+            {[0, 1, 2].map((i) => (
+              <rect key={i} x={312 + i * 42} y="205" width="30" height="58" rx="4" fill="#0F172A" stroke="#38BDF8" strokeWidth="2.5" />
+            ))}
+            <text x="370" y="285" fontFamily={FONTS.label} fontSize="15" fontWeight="800" fill="#E0F2FE" textAnchor="middle">MEMORI BERSAMA</text>
+
+            {/* Jalur Data Berjalan */}
+            <line x1="230" y1="268" x2="290" y2="268" stroke="#00F5FF" strokeWidth="6" strokeDasharray="10 8" />
+            <line x1="450" y1="220" x2="520" y2="220" stroke="#00F5FF" strokeWidth="6" strokeDasharray="10 8" />
+            <circle cx={230 + (packetX % 60)} cy="268" r="8" fill="#FACC15" />
+            <circle cx={450 + (packetX % 70)} cy="220" r="8" fill="#00F5FF" />
+
+            {/* Kanan: Monitor Menyala Cerah */}
+            <rect x="520" y="100" width="230" height="190" rx="16" fill="#1E293B" stroke="#10B981" strokeWidth="6" />
+            <rect x="536" y="116" width="198" height="150" rx="8" fill="#064E3B" stroke="#34D399" strokeWidth="3" />
+            <rect x="615" y="290" width="40" height="35" fill="#334155" />
+            <rect x="575" y="322" width="120" height="14" rx="7" fill="#475569" />
+
+            <g transform={`translate(635, 190) scale(${checkPop}) translate(-635, -190)`}>
+              <circle cx="635" cy="176" r="34" fill="#10B981" stroke="#FFFFFF" strokeWidth="4" />
+              <path d="M 618 176 L 630 188 L 654 162" fill="none" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <text x="635" y="242" fontFamily={FONTS.title} fontSize="22" fontWeight="900" fill="#FACC15" textAnchor="middle">LANGSUNG NYALA!</text>
+            </g>
+          </g>
+        );
+      }
+
+      /* =====================================================================
+         16. CPU F DISABLED (Seri F -> iGPU Dimatikan -> Motherboard Buta!)
+         ===================================================================== */
+      case "cpu-f-disabled": {
+        const isDisabled = variant === "disabled" || variant === "blind-mobo";
+        const isBlind = variant === "blind-mobo";
+        const stampScale = isDisabled
+          ? spring({ frame: beatFrame, fps, config: { damping: 9, stiffness: 230 } })
+          : 0;
+        const warnScale = isBlind
+          ? spring({ frame: beatFrame, fps, config: { damping: 10, stiffness: 210 } })
+          : 0;
+
+        if (isBlind) {
+          // Variant "blind-mobo": Motherboard buta + butuh slot VGA Eksternal
+          const blink = 0.45 + 0.55 * Math.abs(Math.sin(t * 7));
+          return (
+            <g>
+              {/* Motherboard */}
+              <rect x="75" y="65" width="380" height="320" rx="20" fill="#0F172A" stroke="#F43F5E" strokeWidth="5" />
+              <text x="265" y="102" fontFamily={FONTS.label} fontSize="18" fontWeight="900" fill="#94A3B8" textAnchor="middle">MOTHERBOARD</text>
+
+              {/* CPU Seri F */}
+              <rect x="110" y="122" width="135" height="125" rx="14" fill="#1E293B" stroke="#F43F5E" strokeWidth="4" />
+              <text x="177" y="185" fontFamily={FONTS.title} fontSize="42" fontWeight="900" fill="#FACC15" textAnchor="middle">CPU F</text>
+              <text x="177" y="222" fontFamily={FONTS.label} fontSize="16" fontWeight="800" fill="#FB7185" textAnchor="middle">NO iGPU</text>
+
+              {/* Port HDMI Motherboard Silang */}
+              <rect x="295" y="140" width="125" height="62" rx="10" fill="#4C0519" stroke="#F43F5E" strokeWidth="4" />
+              <text x="357" y="169" fontFamily={FONTS.label} fontSize="17" fontWeight="900" fill="#FFFFFF" textAnchor="middle">PORT MOBO</text>
+              <text x="357" y="191" fontFamily={FONTS.title} fontSize="20" fontWeight="900" fill="#FACC15" textAnchor="middle">BUTA TOTAL!</text>
+
+              {/* Slot PCIe Kosong Meminta VGA */}
+              <rect x="115" y="286" width="300" height="44" rx="8" fill="#1E293B" stroke="#FACC15" strokeWidth="4" strokeDasharray="10 6" opacity={blink} />
+              <text x="265" y="315" fontFamily={FONTS.title} fontSize="21" fontWeight="900" fill="#FACC15" textAnchor="middle">SLOT VGA EKSTERNAL</text>
+
+              {/* Kartu VGA Eksternal Masuk */}
+              <g transform={`translate(505, 115) scale(${0.85 + warnScale * 0.15})`}>
+                <rect x="0" y="0" width="235" height="220" rx="20" fill="#1E1B4B" stroke="#00F5FF" strokeWidth="5" />
+                <text x="117" y="48" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#00F5FF" textAnchor="middle">WAJIB VGA</text>
+                <text x="117" y="78" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#FFFFFF" textAnchor="middle">EKSTERNAL (VRAM)</text>
+                <circle cx="72" cy="145" r="36" fill="#0F172A" stroke="#38BDF8" strokeWidth="4" />
+                <circle cx="164" cy="145" r="36" fill="#0F172A" stroke="#38BDF8" strokeWidth="4" />
+                <g transform={`rotate(${(globalFrame * 12) % 360} 72 145)`}>
+                  <line x1="48" y1="145" x2="96" y2="145" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                  <line x1="72" y1="121" x2="72" y2="169" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                </g>
+                <g transform={`rotate(${(globalFrame * 12) % 360} 164 145)`}>
+                  <line x1="140" y1="145" x2="188" y2="145" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                  <line x1="164" y1="121" x2="164" y2="169" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                </g>
+              </g>
+            </g>
+          );
+        }
+
+        // Variant "f-chip" / "disabled": Chip CPU Seri F dengan blok iGPU disilang & digembok
+        return (
+          <g>
+            {/* Pin-pin Emas */}
+            {[220, 270, 320, 370, 420, 470, 520, 570].map((px) => (
+              <g key={px}>
+                <rect x={px - 6} y="42" width="12" height="22" rx="3" fill="#FACC15" />
+                <rect x={px - 6} y="386" width="12" height="22" rx="3" fill="#FACC15" />
+              </g>
+            ))}
+            {/* Badan Chip */}
+            <rect x="180" y="64" width="440" height="322" rx="26" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
+            {/* Bagian Atas: CPU Core + Badge F */}
+            <rect x="210" y="92" width="240" height="120" rx="14" fill="#1E293B" stroke="#38BDF8" strokeWidth="4" />
+            <text x="330" y="160" fontFamily={FONTS.title} fontSize="36" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
+            <rect x="468" y="92" width="122" height="120" rx="14" fill="#FACC15" stroke="#0F172A" strokeWidth="4" />
+            <text x="529" y="168" fontFamily={FONTS.title} fontSize="72" fontWeight="900" fill="#0F172A" textAnchor="middle">F</text>
+            <text x="529" y="198" fontFamily={FONTS.label} fontSize="16" fontWeight="900" fill="#7F1D1D" textAnchor="middle">SERI F</text>
+
+            {/* Bagian Bawah: Blok iGPU */}
+            <rect x="210" y="234" width="380" height="122" rx="16" fill={isDisabled ? "#4C0519" : "#1E293B"} stroke="#F43F5E" strokeWidth="4.5" strokeDasharray="12 8" />
+            <text x="400" y="305" fontFamily={FONTS.title} fontSize="42" fontWeight="900" fill="#94A3B8" textAnchor="middle">BLOK iGPU</text>
+
+            {/* Stempel Silang Merah "DIMATIKAN!" */}
+            {isDisabled && (
+              <g transform={`translate(400, 295) scale(${stampScale}) rotate(-6) translate(-400, -295)`}>
+                <rect x="235" y="252" width="330" height="86" rx="14" fill="#F43F5E" stroke="#FFFFFF" strokeWidth="5" />
+                <text x="400" y="310" fontFamily={FONTS.title} fontSize="44" fontWeight="900" fill="#FFFFFF" textAnchor="middle">DIMATIKAN!</text>
+              </g>
+            )}
+          </g>
+        );
+      }
+
+      /* =====================================================================
+         17. iGPU TWO SECRETS (Mitos Sampah -> SALAH! -> #1 Ban Serep & #2 Quick Sync)
+         ===================================================================== */
+      case "igpu-two-secrets": {
+        if (variant === "trash-myth" || variant === "wrong-stamp") {
+          const isWrong = variant === "wrong-stamp";
+          const stampScale = isWrong
+            ? spring({ frame: beatFrame, fps, config: { damping: 9, stiffness: 240 } })
+            : 0;
+          return (
+            <g>
+              {/* Kiri: VGA Mahal */}
+              <rect x="85" y="110" width="260" height="225" rx="22" fill="#1E1B4B" stroke="#00F5FF" strokeWidth="5" />
+              <text x="215" y="160" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#00F5FF" textAnchor="middle">VGA MAHAL</text>
+              <circle cx="165" cy="240" r="38" fill="#0F172A" stroke="#38BDF8" strokeWidth="4" />
+              <circle cx="265" cy="240" r="38" fill="#0F172A" stroke="#38BDF8" strokeWidth="4" />
+              <g transform={`rotate(${(globalFrame * 14) % 360} 165 240)`}>
+                <line x1="140" y1="240" x2="190" y2="240" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                <line x1="165" y1="215" x2="165" y2="265" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+              </g>
+              <g transform={`rotate(${(globalFrame * 14) % 360} 265 240)`}>
+                <line x1="240" y1="240" x2="290" y2="240" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+                <line x1="265" y1="215" x2="265" y2="265" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" />
+              </g>
+
+              {/* Kanan: iGPU di atas Tempat Sampah */}
+              <g transform={`translate(565, ${145 + Math.sin(t * 5) * 8})`}>
+                <rect x="-75" y="-42" width="150" height="70" rx="14" fill="#334155" stroke="#94A3B8" strokeWidth="4" />
+                <text x="0" y="3" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#FFFFFF" textAnchor="middle">iGPU</text>
+              </g>
+              {/* Tempat Sampah */}
+              <polygon points="495,215 635,215 618,355 512,355" fill="#1E293B" stroke="#94A3B8" strokeWidth="5" strokeLinejoin="round" />
+              <rect x="480" y="195" width="170" height="22" rx="8" fill="#475569" stroke="#94A3B8" strokeWidth="4" />
+              <text x="565" y="295" fontFamily={FONTS.title} fontSize="26" fontWeight="900" fill="#FACC15" textAnchor="middle">SAMPAH?</text>
+
+              {/* Stempel SALAH! */}
+              {isWrong && (
+                <g transform={`translate(400, 225) scale(${stampScale}) rotate(-10) translate(-400, -225)`}>
+                  <rect x="215" y="158" width="370" height="134" rx="22" fill="#F43F5E" stroke="#FACC15" strokeWidth="8" />
+                  <text x="400" y="248" fontFamily={FONTS.title} fontSize="76" fontWeight="900" fill="#FFFFFF" textAnchor="middle">SALAH!</text>
+                </g>
+              )}
+            </g>
+          );
+        }
+
+        if (variant === "secret-banner") {
+          const cardPop = spring({ frame: beatFrame, fps, config: { damping: 11, stiffness: 210 } });
+          return (
+            <g transform={`translate(400, 225) scale(${cardPop}) translate(-400, -225)`}>
+              <rect x="130" y="55" width="540" height="72" rx="20" fill="#FACC15" stroke="#0F172A" strokeWidth="6" />
+              <text x="400" y="103" fontFamily={FONTS.title} fontSize="36" fontWeight="900" fill="#0F172A" textAnchor="middle">2 FUNGSI RAHASIA iGPU</text>
+
+              <rect x="85" y="155" width="295" height="220" rx="22" fill="#0F172A" stroke="#10B981" strokeWidth="6" />
+              <circle cx="232" cy="222" r="36" fill="#10B981" />
+              <text x="232" y="235" fontFamily={FONTS.title} fontSize="38" fontWeight="900" fill="#0F172A" textAnchor="middle">1</text>
+              <text x="232" y="295" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">BAN SEREP</text>
+              <text x="232" y="335" fontFamily={FONTS.label} fontSize="20" fontWeight="800" fill="#34D399" textAnchor="middle">SAAT VGA RUSAK</text>
+
+              <rect x="420" y="155" width="295" height="220" rx="22" fill="#0F172A" stroke="#00F5FF" strokeWidth="6" />
+              <circle cx="567" cy="222" r="36" fill="#00F5FF" />
+              <text x="567" y="235" fontFamily={FONTS.title} fontSize="38" fontWeight="900" fill="#0F172A" textAnchor="middle">2</text>
+              <text x="567" y="295" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">QUICK SYNC</text>
+              <text x="567" y="335" fontFamily={FONTS.label} fontSize="20" fontWeight="800" fill="#38BDF8" textAnchor="middle">RENDER VIDEO NGEBUT</text>
+            </g>
+          );
+        }
+
+        if (variant === "backup-tire") {
+          // Fungsi #1: VGA rusak berasap, kabel pindah ke iGPU -> Layar tetap hidup!
+          const vgaShake = Math.sin(globalFrame * 2.2) * 4;
+          const smokeRise = (globalFrame * 2) % 45;
+          return (
+            <g>
+              {/* VGA Rusak di Kiri Atas */}
+              <g transform={`translate(${vgaShake}, 0)`}>
+                <rect x="75" y="75" width="220" height="128" rx="16" fill="#4C0519" stroke="#F43F5E" strokeWidth="5" />
+                <text x="185" y="125" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#FFFFFF" textAnchor="middle">VGA RUSAK!</text>
+                <text x="185" y="165" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FACC15" textAnchor="middle">✖ MATI</text>
+                {/* Asap */}
+                <circle cx="145" cy={65 - smokeRise * 0.7} r="14" fill="#94A3B8" opacity={0.6 - smokeRise / 80} />
+                <circle cx="215" cy={58 - smokeRise * 0.9} r="18" fill="#CBD5E1" opacity={0.6 - smokeRise / 80} />
+              </g>
+
+              {/* iGPU Ban Serep di Kiri Bawah */}
+              <rect x="75" y="238" width="220" height="140" rx="18" fill="#064E3B" stroke="#10B981" strokeWidth="6" />
+              <text x="185" y="290" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FACC15" textAnchor="middle">iGPU AKTIF</text>
+              <rect x="102" y="312" width="166" height="44" rx="10" fill="#10B981" />
+              <text x="185" y="342" fontFamily={FONTS.title} fontSize="22" fontWeight="900" fill="#0F172A" textAnchor="middle">BAN SEREP ✓</text>
+
+              {/* Kabel Hijau Nyala dari iGPU ke Monitor */}
+              <path d="M 295 308 C 365 308, 375 215, 445 215" fill="none" stroke="#10B981" strokeWidth="8" strokeLinecap="round" />
+              <circle cx={295 + ((propFrame * 6) % 150)} cy={308 - Math.min(93, ((propFrame * 6) % 150) * 0.62)} r="8" fill="#FACC15" />
+
+              {/* Monitor Hidup Aman */}
+              <rect x="445" y="100" width="275" height="215" rx="18" fill="#1E293B" stroke="#10B981" strokeWidth="6" />
+              <rect x="462" y="118" width="241" height="170" rx="8" fill="#064E3B" stroke="#34D399" strokeWidth="3" />
+              <rect x="562" y="315" width="42" height="36" fill="#334155" />
+              <rect x="518" y="348" width="130" height="16" rx="8" fill="#475569" />
+              <circle cx="582" cy="182" r="32" fill="#10B981" stroke="#FFFFFF" strokeWidth="4" />
+              <path d="M 566 182 L 578 194 L 600 170" fill="none" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+              <text x="582" y="252" fontFamily={FONTS.title} fontSize="24" fontWeight="900" fill="#FACC15" textAnchor="middle">PC TETAP NYALA!</text>
+            </g>
+          );
+        }
+
+        // Variant "quick-sync": Fungsi #2: Quick Sync render cepat + VGA utama tetap lega
+        const renderProgress = Math.min(430, 80 + ((propFrame * 11) % 350));
+        return (
+          <g>
+            {/* Jalur Atas: iGPU Quick Sync */}
+            <rect x="75" y="75" width="650" height="145" rx="22" fill="#0F172A" stroke="#00F5FF" strokeWidth="5" />
+            <rect x="100" y="96" width="215" height="44" rx="10" fill="#00F5FF" />
+            <polygon points="122,106 112,120 120,120 116,132 130,116 122,116" fill="#0F172A" />
+            <text x="218" y="126" fontFamily={FONTS.title} fontSize="23" fontWeight="900" fill="#0F172A" textAnchor="middle">QUICK SYNC</text>
+            <text x="518" y="126" fontFamily={FONTS.title} fontSize="24" fontWeight="900" fill="#FACC15" textAnchor="middle">RENDER VIDEO NGEBUT!</text>
+            {/* Progress Bar Render */}
+            <rect x="100" y="158" width="590" height="34" rx="17" fill="#1E293B" stroke="#38BDF8" strokeWidth="3" />
+            <rect x="105" y="163" width={renderProgress + 150} height="24" rx="12" fill="#10B981" />
+
+            {/* Jalur Bawah: VGA Utama Aman */}
+            <rect x="75" y="250" width="650" height="135" rx="22" fill="#1E1B4B" stroke="#818CF8" strokeWidth="5" />
+            <text x="235" y="305" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#FFFFFF" textAnchor="middle">VGA UTAMA</text>
+            <text x="235" y="346" fontFamily={FONTS.label} fontSize="20" fontWeight="800" fill="#A5B4FC" textAnchor="middle">BEBAN EFEK &amp; GAME</text>
+            <rect x="395" y="282" width="305" height="70" rx="16" fill="#064E3B" stroke="#34D399" strokeWidth="4" />
+            <text x="547" y="325" fontFamily={FONTS.title} fontSize="21" fontWeight="900" fill="#34D399" textAnchor="middle">TIDAK NGOS-NGOSAN ✓</text>
+          </g>
+        );
+      }
+
+      /* =====================================================================
+         18. CPU VS & CTA (Perbandingan Harga & Fitur -> Pilih Mana?)
+         ===================================================================== */
+      case "cpu-vs-cta": {
+        if (variant === "price-compare") {
+          return (
+            <g>
+              {/* Kartu Kiri: CPU + iGPU */}
+              <rect x="85" y="75" width="285" height="300" rx="24" fill="#0F172A" stroke="#10B981" strokeWidth="6" />
+              <rect x="112" y="98" width="231" height="52" rx="12" fill="#10B981" />
+              <text x="227" y="133" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#0F172A" textAnchor="middle">CPU + iGPU</text>
+              <text x="227" y="205" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Langsung Nyala</text>
+              <text x="227" y="252" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Ban Serep VGA</text>
+              <text x="227" y="299" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FACC15" textAnchor="middle">✓ Quick Sync Video</text>
+              <text x="227" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Harga sedikit lebih tinggi</text>
+
+              {/* VS Tengah */}
+              <circle cx="400" cy="225" r="38" fill="#FACC15" stroke="#0F172A" strokeWidth="5" />
+              <text x="400" y="238" fontFamily={FONTS.title} fontSize="34" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
+
+              {/* Kartu Kanan: CPU Tanpa iGPU */}
+              <rect x="430" y="75" width="285" height="300" rx="24" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
+              <rect x="457" y="98" width="231" height="52" rx="12" fill="#F43F5E" />
+              <text x="572" y="133" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#FFFFFF" textAnchor="middle">SERI F (NO iGPU)</text>
+              <text x="572" y="205" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#34D399" textAnchor="middle">✓ Harga Lebih Murah</text>
+              <text x="572" y="252" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Wajib VGA Eksternal</text>
+              <text x="572" y="299" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Tanpa Ban Serep</text>
+              <text x="572" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Performa gaming sama</text>
+            </g>
+          );
+        }
+
+        // Variant "cta": Kartu Komentar Pilihan Penonton
+        const bounce = 1 + Math.sin(t * 8) * 0.04;
+        const tapOffset = Math.max(0, Math.sin(t * 9)) * 12;
+        return (
+          <g>
+            <g transform={`translate(400, 225) scale(${bounce}) translate(-400, -225)`}>
+              <rect x="115" y="115" width="570" height="205" rx="34" fill="#FFFFFF" stroke="#0F172A" strokeWidth="8" />
+              <polygon points="365,318 400,368 435,318" fill="#FFFFFF" stroke="#0F172A" strokeWidth="8" strokeLinejoin="round" />
+              <rect x="355" y="305" width="90" height="22" fill="#FFFFFF" />
+
+              <text x="400" y="188" fontFamily={FONTS.title} fontSize="38" fontWeight="900" fill="#0F172A" textAnchor="middle">
+                TIM iGPU ATAU SERI F?
+              </text>
+
+              <rect x="155" y="220" width="375" height="58" rx="29" fill="#F1F5F9" stroke="#CBD5E1" strokeWidth="4" />
+              <text x="188" y="257" fontFamily={FONTS.label} fontSize="23" fontWeight="800" fill="#475569">
+                Tulis di komentar{((Math.floor(globalFrame / 8) % 3) === 0) ? "." : ((Math.floor(globalFrame / 8) % 3) === 1) ? ".." : "..."}
+              </text>
+              <rect x="545" y="220" width="100" height="58" rx="29" fill="#0EA5E9" stroke="#0F172A" strokeWidth="4" />
+              <polygon points="583,236 619,249 583,262 591,249" fill="#FFFFFF" />
+            </g>
+
+            {/* 4 Gelembung Ikon Vektor SVG (Tanpa Emoji Font) */}
+            <g transform={`translate(75, ${98 + Math.sin(t * 4.5) * 14})`}>
+              <circle cx="0" cy="0" r="36" fill="#1E1B4B" stroke="#22D3EE" strokeWidth="4.5" />
+              <rect x="-15" y="-15" width="30" height="30" rx="5" fill="#0EA5E9" stroke="#FFFFFF" strokeWidth="2.5" />
+              <text x="0" y="5" fontFamily={FONTS.title} fontSize="13" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU</text>
+            </g>
+            <g transform={`translate(725, ${98 + Math.sin(t * 4.5 + 1.5) * 14})`}>
+              <circle cx="0" cy="0" r="36" fill="#1E1B4B" stroke="#22D3EE" strokeWidth="4.5" />
+              <polygon points="4,-18 -12,2 0,2 -4,18 14,-2 2,-2" fill="#FACC15" stroke="#0F172A" strokeWidth="2" strokeLinejoin="round" />
+            </g>
+            <g transform={`translate(85, ${350 + Math.sin(t * 4.5 + 2.8) * 14})`}>
+              <circle cx="0" cy="0" r="36" fill="#1E1B4B" stroke="#22D3EE" strokeWidth="4.5" />
+              <path d="M -14 0 L -4 11 L 16 -11" fill="none" stroke="#10B981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+            <g transform={`translate(715, ${350 + Math.sin(t * 4.5 + 4.1) * 14})`}>
+              <circle cx="0" cy="0" r="36" fill="#1E1B4B" stroke="#22D3EE" strokeWidth="4.5" />
+              <rect x="-17" y="-12" width="34" height="22" rx="7" fill="#38BDF8" />
+              <polygon points="-5,10 0,18 6,10" fill="#38BDF8" />
+            </g>
+
+            <g transform={`translate(${612 - tapOffset * 0.5}, ${284 - tapOffset})`}>
+              <polygon points="0,0 0,48 14,36 26,56 36,50 24,30 42,28" fill="#FACC15" stroke="#0F172A" strokeWidth="4.5" strokeLinejoin="round" />
+            </g>
+          </g>
+        );
+      }
+
       default:
         return null;
     }
