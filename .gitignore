@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build & Rendered Outputs (video/thumbnail besar disimpan lokal)
+out/
+dist/
+build/
+.remotion/
+
+# Environment & Logs
+.env
+.env.*
+*.log
+npm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
