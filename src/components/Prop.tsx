@@ -2,20 +2,9 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { PALETTE } from "../config";
 import { popIn } from "../lib/anim";
+import type { PropType } from "../core/types";
 
-export type PropType =
-  | "book"
-  | "magnifier"
-  | "lightbulb"
-  | "star"
-  | "arrow"
-  | "question-mark"
-  | "flask"
-  | "atom"
-  | "moth"
-  | "relay"
-  | "cpu"
-  | "gpu";
+export type { PropType };
 
 export interface PropProps {
   type: PropType;

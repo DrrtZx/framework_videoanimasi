@@ -1,8 +1,9 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, interpolate, spring, random, AbsoluteFill } from "remotion";
-import { PALETTE } from "../config";
 import { calculateShake } from "../lib/anim";
-import type { SceneTheme, SceneTransitionType } from "../episodes/types";
+import { getPreset } from "../presets";
+import type { PresetConfig } from "../presets/types";
+import type { SceneTheme, SceneTransitionType } from "../core/types";
 
 export interface CameraZoomConfig {
   frame: number;
@@ -18,6 +19,7 @@ export interface ShakeConfig {
 
 export interface SceneProps {
   children: React.ReactNode;
+  preset?: PresetConfig;
   theme?: SceneTheme;
   sceneTransition?: SceneTransitionType;
   cameraZoomAt?: CameraZoomConfig;
@@ -34,107 +36,7 @@ export interface SceneProps {
   style?: React.CSSProperties;
 }
 
-interface ThemeStyle {
-  bgCenter: string;
-  bgMid: string;
-  bgOuter: string;
-  gridMinor: string;
-  gridMajor: string;
-  accent: string;
-  accentAlt: string;
-  floorTop: string;
-  floorBottom: string;
-  particleColor: string;
-}
-
-const THEME_PALETTES: Record<SceneTheme, ThemeStyle> = {
-  "cyber-blueprint": {
-    bgCenter: "#0F2F57",
-    bgMid: PALETTE.bg,
-    bgOuter: "#030812",
-    gridMinor: "#0284C7",
-    gridMajor: "#38BDF8",
-    accent: "#00F5FF",
-    accentAlt: "#FACC15",
-    floorTop: "#0B2442",
-    floorBottom: "#040D1B",
-    particleColor: "#38BDF8",
-  },
-  "cyber-crash": {
-    bgCenter: "#241335",
-    bgMid: "#0B152B",
-    bgOuter: "#050712",
-    gridMinor: "#0EA5E9",
-    gridMajor: "#F43F5E",
-    accent: "#FB7185",
-    accentAlt: "#38BDF8",
-    floorTop: "#1A1230",
-    floorBottom: "#060814",
-    particleColor: "#FB7185",
-  },
-  "vintage-1947": {
-    bgCenter: "#154354",
-    bgMid: "#0A2330",
-    bgOuter: "#040E14",
-    gridMinor: "#0D9488",
-    gridMajor: "#38BDF8",
-    accent: "#F59E0B",
-    accentAlt: "#2DD4BF",
-    floorTop: "#103240",
-    floorBottom: "#05121A",
-    particleColor: "#FBBF24",
-  },
-  "spotlight-twist": {
-    bgCenter: "#3B0D2C",
-    bgMid: "#190A26",
-    bgOuter: "#080310",
-    gridMinor: "#A855F7",
-    gridMajor: "#F43F5E",
-    accent: "#FACC15",
-    accentAlt: "#FB7185",
-    floorTop: "#290D29",
-    floorBottom: "#0B0414",
-    particleColor: "#FACC15",
-  },
-  "archive-paper": {
-    bgCenter: "#2C2822",
-    bgMid: "#17202C",
-    bgOuter: "#0A0E14",
-    gridMinor: "#64748B",
-    gridMajor: "#F59E0B",
-    accent: "#FDE047",
-    accentAlt: "#38BDF8",
-    floorTop: "#22252A",
-    floorBottom: "#0B0F17",
-    particleColor: "#FDE68A",
-  },
-  "edison-1878": {
-    bgCenter: "#472B10",
-    bgMid: "#231509",
-    bgOuter: "#0E0703",
-    gridMinor: "#92400E",
-    gridMajor: "#F59E0B",
-    accent: "#FDE047",
-    accentAlt: "#FB923C",
-    floorTop: "#331F0D",
-    floorBottom: "#120A04",
-    particleColor: "#FCD34D",
-  },
-  "neon-coder": {
-    bgCenter: "#23195C",
-    bgMid: "#0E0D2E",
-    bgOuter: "#050414",
-    gridMinor: "#6366F1",
-    gridMajor: "#22D3EE",
-    accent: "#00F5FF",
-    accentAlt: "#C084FC",
-    floorTop: "#191547",
-    floorBottom: "#06051A",
-    particleColor: "#22D3EE",
-  },
-};
-
-// Partikel melayang deterministik (20 partikel)
+// Partikel melayang deterministik (18 partikel)
 const AMBIENT_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
   id: i,
   x: random(`p-x-${i}`) * 1020 + 30,
@@ -147,7 +49,8 @@ const AMBIENT_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
 
 export const Scene: React.FC<SceneProps> = ({
   children,
-  theme = "cyber-blueprint",
+  preset = getPreset(),
+  theme,
   sceneTransition = "none",
   cameraZoomAt,
   shakeAt,
@@ -163,7 +66,10 @@ export const Scene: React.FC<SceneProps> = ({
   const { fps } = useVideoConfig();
   const t = frame / fps;
 
-  const th = THEME_PALETTES[theme] ?? THEME_PALETTES["cyber-blueprint"];
+  const activeTheme = theme ?? preset.defaultTheme;
+  const th = preset.themes[activeTheme] ?? preset.themes[preset.defaultTheme];
+  const isCleanStudio =
+    preset.stageStyle === "clean-studio" || preset.stageStyle === "minimal";
 
   // 1. Kamera Zoom (gabungkan kontinu cameraScale & legacy cameraZoomAt)
   let zoom = cameraScale ?? 1.0;
@@ -179,7 +85,7 @@ export const Scene: React.FC<SceneProps> = ({
   let transX = 0;
   let transScale = 1;
   let flashOpacity = 0;
-  let shutterGap = 1; // 1 = terbuka penuh
+  let shutterGap = 1;
 
   if (sceneTransition === "slide-left") {
     const s = spring({ frame, fps, config: { damping: 16, stiffness: 180, mass: 0.7 } });
@@ -199,11 +105,19 @@ export const Scene: React.FC<SceneProps> = ({
   // 3. Kamera Shake Deterministik
   const shake = calculateShake(frame, shakeAt);
 
-  // 4. Animasi latar dinamis (grid drift, scanline, spotlight, gears)
+  // 4. Animasi latar dinamis
   const gridShiftY = (frame * 0.65) % 120;
   const scanlineY = ((frame * 9) % 2100) - 100;
   const spotlightAngle = Math.sin(t * 1.4) * 18;
   const gearSpin = frame * 0.9;
+
+  // Drift lembut 3 orb ambient untuk mode Clean Studio
+  const orb1X = 240 + Math.sin(t * 0.55) * 48;
+  const orb1Y = 390 + Math.cos(t * 0.45) * 36;
+  const orb2X = 830 + Math.cos(t * 0.5) * 52;
+  const orb2Y = 640 + Math.sin(t * 0.4) * 42;
+  const orb3X = 540 + Math.sin(t * 0.35 + 1.2) * 38;
+  const orb3Y = 1120 + Math.cos(t * 0.48) * 28;
 
   // Equalizer bars (7 batang hidup mengikuti rmsLevel)
   const eqBars = [0.55, 0.9, 0.7, 1.0, 0.8, 0.65, 0.45].map((weight, i) => {
@@ -213,6 +127,7 @@ export const Scene: React.FC<SceneProps> = ({
   });
 
   const bgMidColor = backgroundColor ?? th.bgMid;
+  const svgKey = `${preset.id}-${activeTheme}`;
 
   return (
     <AbsoluteFill
@@ -229,7 +144,7 @@ export const Scene: React.FC<SceneProps> = ({
           transformOrigin: "center 28%",
         }}
       >
-        {/* ================= 1. LATAR BELAKANG TEMA HIDUP (MINIMAL 2 LAPIS) ================= */}
+        {/* ================= 1. LATAR BELAKANG TEMA HIDUP ================= */}
         <svg
           width="1080"
           height="1920"
@@ -237,129 +152,178 @@ export const Scene: React.FC<SceneProps> = ({
           style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}
         >
           <defs>
-            <pattern
-              id={`gridSmall-${theme}`}
-              width="24"
-              height="24"
-              patternUnits="userSpaceOnUse"
-              patternTransform={`translate(0, ${gridShiftY * 0.5})`}
-            >
-              <path d="M 24 0 L 0 0 0 24" fill="none" stroke={th.gridMinor} strokeWidth="0.75" opacity="0.22" />
-            </pattern>
-            <pattern
-              id={`gridMajor-${theme}`}
-              width="120"
-              height="120"
-              patternUnits="userSpaceOnUse"
-              patternTransform={`translate(0, ${gridShiftY * 0.5})`}
-            >
-              <rect width="120" height="120" fill={`url(#gridSmall-${theme})`} />
-              <path d="M 120 0 L 0 0 0 120" fill="none" stroke={th.gridMajor} strokeWidth="1.5" opacity="0.35" />
-            </pattern>
-            <linearGradient id={`floorGrad-${theme}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={th.floorTop} stopOpacity="0.92" />
+            {!isCleanStudio && (
+              <>
+                <pattern
+                  id={`gridSmall-${svgKey}`}
+                  width="24"
+                  height="24"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform={`translate(0, ${gridShiftY * 0.5})`}
+                >
+                  <path d="M 24 0 L 0 0 0 24" fill="none" stroke={th.gridMinor} strokeWidth="0.75" opacity="0.22" />
+                </pattern>
+                <pattern
+                  id={`gridMajor-${svgKey}`}
+                  width="120"
+                  height="120"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform={`translate(0, ${gridShiftY * 0.5})`}
+                >
+                  <rect width="120" height="120" fill={`url(#gridSmall-${svgKey})`} />
+                  <path d="M 120 0 L 0 0 0 120" fill="none" stroke={th.gridMajor} strokeWidth="1.5" opacity="0.35" />
+                </pattern>
+              </>
+            )}
+            <linearGradient id={`floorGrad-${svgKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={th.floorTop} stopOpacity={isCleanStudio ? "0.86" : "0.92"} />
               <stop offset="100%" stopColor={th.floorBottom} stopOpacity="0.98" />
             </linearGradient>
-            <linearGradient id={`spotGrad-${theme}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={th.accent} stopOpacity="0.26" />
+            <linearGradient id={`horizonFade-${svgKey}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={th.accent} stopOpacity="0" />
+              <stop offset="20%" stopColor={th.accent} stopOpacity="0.32" />
+              <stop offset="50%" stopColor={th.accent} stopOpacity="0.52" />
+              <stop offset="80%" stopColor={th.accent} stopOpacity="0.32" />
               <stop offset="100%" stopColor={th.accent} stopOpacity="0" />
             </linearGradient>
+            <linearGradient id={`spotGrad-${svgKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={th.accent} stopOpacity={isCleanStudio ? "0.18" : "0.26"} />
+              <stop offset="100%" stopColor={th.accent} stopOpacity="0" />
+            </linearGradient>
+            <radialGradient id={`orb1-${svgKey}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={th.accent} stopOpacity="0.22" />
+              <stop offset="55%" stopColor={th.accent} stopOpacity="0.06" />
+              <stop offset="100%" stopColor={th.accent} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={`orb2-${svgKey}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={th.accentAlt} stopOpacity="0.16" />
+              <stop offset="55%" stopColor={th.accentAlt} stopOpacity="0.04" />
+              <stop offset="100%" stopColor={th.accentAlt} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={`orb3-${svgKey}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={th.gridMajor} stopOpacity="0.18" />
+              <stop offset="60%" stopColor={th.gridMajor} stopOpacity="0.04" />
+              <stop offset="100%" stopColor={th.gridMajor} stopOpacity="0" />
+            </radialGradient>
           </defs>
 
-          {/* Grid Blueprint Bergerak Halus */}
-          <rect width="1080" height="1920" fill={`url(#gridMajor-${theme})`} />
-
-          {/* === DEKORASI KHUSUS PER TEMA === */}
-          {theme === "cyber-crash" && (
-            <g opacity="0.35">
-              {/* Radar lingkaran berdenyut */}
-              <circle cx="540" cy="440" r={180 + ((frame * 3) % 240)} fill="none" stroke={th.accent} strokeWidth="2.5" opacity={1 - ((frame * 3) % 240) / 240} />
-              <circle cx="540" cy="440" r="280" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="14 10" transform={`rotate(${frame * 0.5} 540 440)`} />
-              {/* Scanline glitch berjalan */}
-              <rect x="0" y={scanlineY} width="1080" height="6" fill={th.accent} opacity="0.35" />
-              <rect x="0" y={scanlineY + 12} width="1080" height="2" fill={th.accentAlt} opacity="0.4" />
-            </g>
-          )}
-
-          {theme === "vintage-1947" && (
-            <g opacity="0.35">
-              {/* Gelombang Osiloskop Retro 1947 */}
-              <path
-                d={Array.from({ length: 37 }, (_, i) => {
-                  const x = i * 30;
-                  const y = 760 + Math.sin(i * 0.45 + t * 5) * 28 + Math.cos(i * 0.9 - t * 3) * 14;
-                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-                }).join(" ")}
-                fill="none"
-                stroke={th.accent}
-                strokeWidth="3"
-              />
-              {/* Lingkaran dial teknik */}
-              <circle cx="140" cy="760" r="95" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="8 8" transform={`rotate(${-gearSpin * 0.6} 140 760)`} />
-              <circle cx="940" cy="760" r="110" fill="none" stroke={th.accent} strokeWidth="2" strokeDasharray="12 10" transform={`rotate(${gearSpin * 0.5} 940 760)`} />
-            </g>
-          )}
-
-          {theme === "spotlight-twist" && (
+          {isCleanStudio ? (
+            /* === CLEAN STUDIO AMBIENT GLOW ORBS (TANPA GARIS GRID) === */
             <g>
-              {/* Lampu Sorot Investigasi Menyapu */}
-              <g transform={`translate(540, 0) rotate(${spotlightAngle})`}>
-                <polygon points="-80,0 80,0 440,1500 -440,1500" fill={`url(#spotGrad-${theme})`} />
-              </g>
-              {/* Garis bahaya hazard halus di pinggir atas */}
-              <g opacity="0.3">
-                {Array.from({ length: 16 }, (_, i) => (
-                  <polygon
-                    key={`hz-${i}`}
-                    points={`${i * 80 - 40},0 ${i * 80},0 ${i * 80 - 20},24 ${i * 80 - 60},24`}
-                    fill="#FACC15"
+              <circle cx={orb1X} cy={orb1Y} r="420" fill={`url(#orb1-${svgKey})`} />
+              <circle cx={orb2X} cy={orb2Y} r="460" fill={`url(#orb2-${svgKey})`} />
+              <circle cx={orb3X} cy={orb3Y} r="480" fill={`url(#orb3-${svgKey})`} />
+              {activeTheme === "spotlight-twist" && (
+                <g transform={`translate(540, 0) rotate(${spotlightAngle})`}>
+                  <polygon points="-80,0 80,0 440,1500 -440,1500" fill={`url(#spotGrad-${svgKey})`} />
+                </g>
+              )}
+              {activeTheme === "cyber-crash" && (
+                <circle
+                  cx="540"
+                  cy="440"
+                  r={260 + Math.sin(t * 3.5) * 28}
+                  fill={`url(#orb1-${svgKey})`}
+                  opacity={0.55 + Math.sin(t * 4) * 0.2}
+                />
+              )}
+            </g>
+          ) : (
+            /* === MODE BLUEPRINT KLASIK === */
+            <>
+              <rect width="1080" height="1920" fill={`url(#gridMajor-${svgKey})`} />
+              {activeTheme === "cyber-crash" && (
+                <g opacity="0.35">
+                  <circle cx="540" cy="440" r={180 + ((frame * 3) % 240)} fill="none" stroke={th.accent} strokeWidth="2.5" opacity={1 - ((frame * 3) % 240) / 240} />
+                  <circle cx="540" cy="440" r="280" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="14 10" transform={`rotate(${frame * 0.5} 540 440)`} />
+                  <rect x="0" y={scanlineY} width="1080" height="6" fill={th.accent} opacity="0.35" />
+                  <rect x="0" y={scanlineY + 12} width="1080" height="2" fill={th.accentAlt} opacity="0.4" />
+                </g>
+              )}
+              {activeTheme === "vintage-1947" && (
+                <g opacity="0.35">
+                  <path
+                    d={Array.from({ length: 37 }, (_, i) => {
+                      const x = i * 30;
+                      const y = 760 + Math.sin(i * 0.45 + t * 5) * 28 + Math.cos(i * 0.9 - t * 3) * 14;
+                      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+                    }).join(" ")}
+                    fill="none"
+                    stroke={th.accent}
+                    strokeWidth="3"
                   />
-                ))}
-              </g>
-            </g>
+                  <circle cx="140" cy="760" r="95" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="8 8" transform={`rotate(${-gearSpin * 0.6} 140 760)`} />
+                  <circle cx="940" cy="760" r="110" fill="none" stroke={th.accent} strokeWidth="2" strokeDasharray="12 10" transform={`rotate(${gearSpin * 0.5} 940 760)`} />
+                </g>
+              )}
+              {activeTheme === "spotlight-twist" && (
+                <g>
+                  <g transform={`translate(540, 0) rotate(${spotlightAngle})`}>
+                    <polygon points="-80,0 80,0 440,1500 -440,1500" fill={`url(#spotGrad-${svgKey})`} />
+                  </g>
+                  <g opacity="0.3">
+                    {Array.from({ length: 16 }, (_, i) => (
+                      <polygon
+                        key={`hz-${i}`}
+                        points={`${i * 80 - 40},0 ${i * 80},0 ${i * 80 - 20},24 ${i * 80 - 60},24`}
+                        fill="#FACC15"
+                      />
+                    ))}
+                  </g>
+                </g>
+              )}
+              {activeTheme === "archive-paper" && (
+                <g opacity="0.32">
+                  <circle cx="540" cy="430" r="340" fill="none" stroke={th.accent} strokeWidth="2" strokeDasharray="16 12" transform={`rotate(${frame * 0.35} 540 430)`} />
+                  <circle cx="540" cy="430" r="440" fill="none" stroke={th.accentAlt} strokeWidth="1.5" strokeDasharray="6 14" transform={`rotate(${-frame * 0.25} 540 430)`} />
+                </g>
+              )}
+              {activeTheme === "edison-1878" && (
+                <g opacity="0.28">
+                  <g transform={`translate(130, 820) rotate(${gearSpin})`}>
+                    <circle cx="0" cy="0" r="85" fill="none" stroke={th.accent} strokeWidth="10" strokeDasharray="18 14" />
+                    <circle cx="0" cy="0" r="56" fill="none" stroke={th.accentAlt} strokeWidth="4" />
+                    <circle cx="0" cy="0" r="18" fill={th.accent} />
+                  </g>
+                  <g transform={`translate(950, 740) rotate(${-gearSpin * 1.2})`}>
+                    <circle cx="0" cy="0" r="105" fill="none" stroke={th.accentAlt} strokeWidth="12" strokeDasharray="22 16" />
+                    <circle cx="0" cy="0" r="70" fill="none" stroke={th.accent} strokeWidth="4" />
+                    <circle cx="0" cy="0" r="22" fill={th.accentAlt} />
+                  </g>
+                  <circle cx="540" cy="420" r="320" fill={th.accent} opacity="0.08" />
+                </g>
+              )}
+              {activeTheme === "neon-coder" && (
+                <g opacity="0.35">
+                  <circle cx="540" cy="440" r="310" fill="none" stroke={th.accent} strokeWidth="2.5" strokeDasharray="24 14" transform={`rotate(${frame * 0.6} 540 440)`} />
+                  <circle cx="540" cy="440" r="390" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="10 18" transform={`rotate(${-frame * 0.45} 540 440)`} />
+                  <rect x="0" y={scanlineY} width="1080" height="4" fill={th.accent} opacity="0.4" />
+                </g>
+              )}
+            </>
           )}
 
-          {theme === "archive-paper" && (
-            <g opacity="0.32">
-              {/* Lingkaran orbit peta dunia & arsip */}
-              <circle cx="540" cy="430" r="340" fill="none" stroke={th.accent} strokeWidth="2" strokeDasharray="16 12" transform={`rotate(${frame * 0.35} 540 430)`} />
-              <circle cx="540" cy="430" r="440" fill="none" stroke={th.accentAlt} strokeWidth="1.5" strokeDasharray="6 14" transform={`rotate(${-frame * 0.25} 540 430)`} />
-            </g>
-          )}
-
-          {theme === "edison-1878" && (
-            <g opacity="0.28">
-              {/* Roda Gigi Mesin Vintage 1878 Berputar */}
-              <g transform={`translate(130, 820) rotate(${gearSpin})`}>
-                <circle cx="0" cy="0" r="85" fill="none" stroke={th.accent} strokeWidth="10" strokeDasharray="18 14" />
-                <circle cx="0" cy="0" r="56" fill="none" stroke={th.accentAlt} strokeWidth="4" />
-                <circle cx="0" cy="0" r="18" fill={th.accent} />
-              </g>
-              <g transform={`translate(950, 740) rotate(${-gearSpin * 1.2})`}>
-                <circle cx="0" cy="0" r="105" fill="none" stroke={th.accentAlt} strokeWidth="12" strokeDasharray="22 16" />
-                <circle cx="0" cy="0" r="70" fill="none" stroke={th.accent} strokeWidth="4" />
-                <circle cx="0" cy="0" r="22" fill={th.accentAlt} />
-              </g>
-              {/* Cahaya hangat filamen atas */}
-              <circle cx="540" cy="420" r="320" fill={th.accent} opacity="0.08" />
-            </g>
-          )}
-
-          {theme === "neon-coder" && (
-            <g opacity="0.35">
-              {/* Cincin neon cyber berputar */}
-              <circle cx="540" cy="440" r="310" fill="none" stroke={th.accent} strokeWidth="2.5" strokeDasharray="24 14" transform={`rotate(${frame * 0.6} 540 440)`} />
-              <circle cx="540" cy="440" r="390" fill="none" stroke={th.accentAlt} strokeWidth="2" strokeDasharray="10 18" transform={`rotate(${-frame * 0.45} 540 440)`} />
-              <rect x="0" y={scanlineY} width="1080" height="4" fill={th.accent} opacity="0.4" />
-            </g>
-          )}
-
-          {/* ================= 2. PARTIKEL AMBIENT MELAYANG (DETERMINISTIK) ================= */}
+          {/* ================= 2. PARTIKEL AMBIENT MELAYANG (HALUS DI CLEAN STUDIO) ================= */}
           <g>
             {AMBIENT_PARTICLES.map((p) => {
               const py = ((p.y - frame * p.speed + 1400) % 1350) + 60;
               const px = p.x + Math.sin(t * p.speed + p.phase) * 18;
-              const op = 0.18 + 0.25 * (0.5 + 0.5 * Math.sin(t * 2.5 + p.phase));
+              const op = isCleanStudio
+                ? 0.08 + 0.14 * (0.5 + 0.5 * Math.sin(t * 2.2 + p.phase))
+                : 0.18 + 0.25 * (0.5 + 0.5 * Math.sin(t * 2.5 + p.phase));
+
+              if (isCleanStudio) {
+                return (
+                  <circle
+                    key={p.id}
+                    cx={px}
+                    cy={py}
+                    r={p.size * 1.15}
+                    fill={th.particleColor}
+                    opacity={op}
+                  />
+                );
+              }
 
               if (p.shape === 1) {
                 return (
@@ -378,42 +342,62 @@ export const Scene: React.FC<SceneProps> = ({
             })}
           </g>
 
-          {/* ================= 3. LANTAI PANGGUNG 3D PERSPEKTIF (AGAR JOKOWO BERPIJAK!) ================= */}
+          {/* ================= 3. LANTAI PANGGUNG STUDIO ================= */}
           <g>
-            <rect x="0" y="1395" width="1080" height="525" fill={`url(#floorGrad-${theme})`} />
-            {/* Garis Cakrawala Panggung Bercahaya */}
-            <line x1="0" y1="1395" x2="1080" y2="1395" stroke={th.accent} strokeWidth="3" opacity="0.65" />
-            <line x1="0" y1="1399" x2="1080" y2="1399" stroke={th.gridMajor} strokeWidth="8" opacity="0.16" />
-            {/* Garis Grid Perspektif Panggung */}
-            <g stroke={th.gridMajor} strokeWidth="1.4" opacity="0.24">
-              <line x1="540" y1="1395" x2="540" y2="1920" />
-              <line x1="360" y1="1395" x2="180" y2="1920" />
-              <line x1="720" y1="1395" x2="900" y2="1920" />
-              <line x1="180" y1="1395" x2="-180" y2="1920" />
-              <line x1="900" y1="1395" x2="1260" y2="1920" />
-              <line x1="0" y1="1450" x2="1080" y2="1450" />
-              <line x1="0" y1="1530" x2="1080" y2="1530" />
-              <line x1="0" y1="1640" x2="1080" y2="1640" />
-              <line x1="0" y1="1780" x2="1080" y2="1780" />
-            </g>
-            {/* Spotlight lantai melingkar di bawah panggung */}
-            <ellipse cx="540" cy="1445" rx="340" ry="38" fill={th.accent} opacity="0.1" />
+            <rect x="0" y="1395" width="1080" height="525" fill={`url(#floorGrad-${svgKey})`} />
+            {isCleanStudio ? (
+              <>
+                <line x1="0" y1="1395" x2="1080" y2="1395" stroke={`url(#horizonFade-${svgKey})`} strokeWidth="2.5" />
+                <ellipse cx="540" cy="1445" rx="380" ry="46" fill={th.accent} opacity="0.14" />
+              </>
+            ) : (
+              <>
+                <line x1="0" y1="1395" x2="1080" y2="1395" stroke={th.accent} strokeWidth="3" opacity="0.65" />
+                <line x1="0" y1="1399" x2="1080" y2="1399" stroke={th.gridMajor} strokeWidth="8" opacity="0.16" />
+                <g stroke={th.gridMajor} strokeWidth="1.4" opacity="0.24">
+                  <line x1="540" y1="1395" x2="540" y2="1920" />
+                  <line x1="360" y1="1395" x2="180" y2="1920" />
+                  <line x1="720" y1="1395" x2="900" y2="1920" />
+                  <line x1="180" y1="1395" x2="-180" y2="1920" />
+                  <line x1="900" y1="1395" x2="1260" y2="1920" />
+                  <line x1="0" y1="1450" x2="1080" y2="1450" />
+                  <line x1="0" y1="1530" x2="1080" y2="1530" />
+                  <line x1="0" y1="1640" x2="1080" y2="1640" />
+                  <line x1="0" y1="1780" x2="1080" y2="1780" />
+                </g>
+                <ellipse cx="540" cy="1445" rx="340" ry="38" fill={th.accent} opacity="0.1" />
+              </>
+            )}
           </g>
 
-          {/* Corner Crop Marks (+) Khas Blueprint */}
-          <g stroke={th.gridMajor} strokeWidth="2.5" opacity="0.55">
-            <line x1="34" y1="22" x2="34" y2="44" />
-            <line x1="23" y1="33" x2="45" y2="33" />
-            <line x1="1046" y1="22" x2="1046" y2="44" />
-            <line x1="1035" y1="33" x2="1057" y2="33" />
-            <line x1="34" y1="1876" x2="34" y2="1898" />
-            <line x1="23" y1="1887" x2="45" y2="1887" />
-            <line x1="1046" y1="1876" x2="1046" y2="1898" />
-            <line x1="1035" y1="1887" x2="1057" y2="1887" />
-          </g>
+          {/* Corner Crop Marks (+) hanya di mode blueprint */}
+          {preset.stageStyle === "blueprint" && (
+            <g stroke={th.gridMajor} strokeWidth="2.5" opacity="0.55">
+              <line x1="34" y1="22" x2="34" y2="44" />
+              <line x1="23" y1="33" x2="45" y2="33" />
+              <line x1="1046" y1="22" x2="1046" y2="44" />
+              <line x1="1035" y1="33" x2="1057" y2="33" />
+              <line x1="34" y1="1876" x2="34" y2="1898" />
+              <line x1="23" y1="1887" x2="45" y2="1887" />
+              <line x1="1046" y1="1876" x2="1046" y2="1898" />
+              <line x1="1035" y1="1887" x2="1057" y2="1887" />
+            </g>
+          )}
         </svg>
 
-        {/* Konten Utama Adegan (StageProp, Jokowo, SFX, Caption) */}
+        {/* Subtle Studio Vignette untuk kedalaman clean-studio */}
+        {isCleanStudio && (
+          <AbsoluteFill
+            style={{
+              background:
+                "radial-gradient(circle at 50% 45%, transparent 56%, rgba(2, 6, 18, 0.38) 100%)",
+              pointerEvents: "none",
+              zIndex: 1,
+            }}
+          />
+        )}
+
+        {/* Konten Utama Adegan (StageProp, Mascot, SFX) */}
         {children}
       </AbsoluteFill>
 

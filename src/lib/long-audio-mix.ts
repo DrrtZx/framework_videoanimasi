@@ -1,6 +1,7 @@
 import React from "react";
-import { Audio, Loop, staticFile, useCurrentFrame, interpolate } from "remotion";
-import { AUDIO_LEVELS } from "../config";
+import { Audio, Loop, Sequence, staticFile, useCurrentFrame, interpolate } from "remotion";
+import { AUDIO_LEVELS } from "../core/config";
+import type { PresetAudioLevels } from "../presets/types";
 import type { SfxCueItem } from "./audio-mix";
 
 /**
@@ -125,6 +126,7 @@ export interface LongAudioMixProps {
   speechFrames?: boolean[];
   sfxCues?: SfxCueItem[];
   bgmSrc?: string;
+  audioLevels?: PresetAudioLevels;
   durationInFrames: number;
 }
 
@@ -136,6 +138,7 @@ export const LongAudioMix: React.FC<LongAudioMixProps> = ({
   speechFrames = [],
   sfxCues = [],
   bgmSrc = staticFile("audio/music/bgm-loop.wav"),
+  audioLevels = AUDIO_LEVELS,
   durationInFrames,
 }) => {
   const frame = useCurrentFrame();
@@ -147,7 +150,7 @@ export const LongAudioMix: React.FC<LongAudioMixProps> = ({
   const bgmVolume = interpolate(
     Number(isSpeakingNow),
     [0, 1],
-    [AUDIO_LEVELS.bgmNormal, AUDIO_LEVELS.bgmDucked]
+    [audioLevels.bgmNormal, audioLevels.bgmDucked]
   );
 
   const children: React.ReactNode[] = [];
@@ -158,19 +161,30 @@ export const LongAudioMix: React.FC<LongAudioMixProps> = ({
       React.createElement(Audio, {
         key: "long-vo-track",
         src: voiceoverSrc,
-        volume: AUDIO_LEVELS.vo,
+        volume: audioLevels.vo,
       })
     );
   }
 
-  // 2. SFX Cues
+  // 2. SFX Cues (terjadwal per frame via <Sequence>)
   sfxCues.forEach((cue, idx) => {
+    const startFrame = Math.max(0, Math.round(cue.frame));
+    const remaining = Math.max(1, durationInFrames - startFrame);
+    const sfxDur = Math.min(90, remaining);
+
     children.push(
-      React.createElement(Audio, {
-        key: `long-sfx-${cue.frame}-${idx}`,
-        src: cue.src,
-        volume: cue.volume ?? AUDIO_LEVELS.sfx,
-      })
+      React.createElement(
+        Sequence,
+        {
+          key: `long-sfx-seq-${startFrame}-${idx}`,
+          from: startFrame,
+          durationInFrames: sfxDur,
+        },
+        React.createElement(Audio, {
+          src: cue.src,
+          volume: cue.volume ?? audioLevels.sfx,
+        })
+      )
     );
   });
 

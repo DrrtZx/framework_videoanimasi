@@ -1,12 +1,18 @@
 import { staticFile } from "remotion";
-import type { EpisodeData } from "./types";
-import { ASAL_USUL_BUG_RMS } from "./asal-usul-bug-rms";
+import type { EpisodeData } from "../../../types";
+import { ASAL_USUL_BUG_RMS } from "./rms";
 
 export const episodeAsalUsulBug: EpisodeData = {
   id: "shorts-asal-usul-bug",
   slug: "asal-usul-bug-komputer",
   title: "Asal-Usul Istilah Bug Komputer",
-  voiceoverSrc: staticFile("audio/vo/asal-usul-bug-vo.wav"),
+  preset: "jokowo",
+  thumbnail: {
+    title: "KENAPA ERROR KOMPUTER DISEBUT BUG?",
+    subtitle: "KASUS NYATA 1947!",
+    floatingProps: ["moth", "relay", "question-mark", "lightbulb"],
+  },
+  voiceoverSrc: staticFile("audio/vo/jokowo/asal-usul-bug-vo.wav"),
   rmsFrames: ASAL_USUL_BUG_RMS,
   facts: [
     {

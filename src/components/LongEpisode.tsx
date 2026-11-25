@@ -1,8 +1,9 @@
 import React from "react";
-import { Sequence, AbsoluteFill } from "remotion";
+import { Sequence, AbsoluteFill, staticFile } from "remotion";
 import { LongChapter } from "./LongChapter";
 import { LongAudioMix } from "../lib/long-audio-mix";
 import { getSfxStaticPath } from "../lib/sfx-events";
+import { getPreset } from "../presets";
 import type { LongEpisodeData } from "../episodes/long-types";
 
 export type LongEpisodeProps = {
@@ -10,6 +11,7 @@ export type LongEpisodeProps = {
 };
 
 export const LongEpisode: React.FC<LongEpisodeProps> = ({ episode }) => {
+  const preset = getPreset(episode.preset);
   let accumulatedFrame = 0;
 
   // Kumpulkan semua event SFX dari seluruh chapter
@@ -35,7 +37,7 @@ export const LongEpisode: React.FC<LongEpisodeProps> = ({ episode }) => {
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#EEF5FF" }}>
+    <AbsoluteFill style={{ backgroundColor: preset.palette.bg }}>
       {/* Sequence Tiap Chapter */}
       {episode.chapters.map((chapter, index) => {
         const from = accumulatedFrame;
@@ -48,15 +50,21 @@ export const LongEpisode: React.FC<LongEpisodeProps> = ({ episode }) => {
             from={from}
             durationInFrames={duration}
           >
-            <LongChapter chapter={chapter} chapterNumber={index + 1} />
+            <LongChapter
+              chapter={chapter}
+              chapterNumber={index + 1}
+              preset={preset}
+            />
           </Sequence>
         );
       })}
 
-      {/* Audio Layering Long Video dengan Auto-Ducking */}
+      {/* Audio Layering Long Video dengan Auto-Ducking sesuai preset */}
       <LongAudioMix
         voiceoverSrc={episode.voiceoverSrc}
         sfxCues={allSfxCues}
+        bgmSrc={staticFile(preset.audio.bgmSrc)}
+        audioLevels={preset.audio.levels}
         durationInFrames={totalDuration}
       />
     </AbsoluteFill>

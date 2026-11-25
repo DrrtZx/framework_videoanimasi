@@ -1,3 +1,4 @@
+import { isValidPresetId } from "../presets";
 import type { LongEpisodeData } from "./long-types";
 import type { ValidationResult } from "./validate";
 
@@ -8,6 +9,7 @@ import type { ValidationResult } from "./validate";
  * 3. Chapter terakhir wajib berjenis 'OUTRO'
  * 4. Durasi total wajib antara 4 sampai 8 menit (7200 sampai 14400 frames @ 30fps)
  * 5. Seluruh URL fakta wajib diawali 'https://'
+ * 6. Preset (jika diisi) wajib terdaftar di src/presets/index.ts
  */
 export function validateLongEpisode(data: LongEpisodeData): ValidationResult {
   const errors: string[] = [];
@@ -15,6 +17,11 @@ export function validateLongEpisode(data: LongEpisodeData): ValidationResult {
   if (!data.id) errors.push("Long episode wajib memiliki ID");
   if (!data.slug) errors.push("Long episode wajib memiliki slug");
   if (!data.title) errors.push("Long episode wajib memiliki title");
+  if (data.preset !== undefined && !isValidPresetId(data.preset)) {
+    errors.push(
+      `Preset '${String(data.preset)}' tidak terdaftar di src/presets/index.ts`
+    );
+  }
 
   // Validasi Fakta
   if (!data.facts || data.facts.length === 0) {

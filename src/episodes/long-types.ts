@@ -1,3 +1,4 @@
+import type { PresetId } from "../presets";
 import type { Expression, Pose, Fact } from "./types";
 
 export type ChapterKind =
@@ -33,10 +34,17 @@ export interface Chapter {
   durationInFrames: number;
 }
 
+export interface LongEpisodeThumbnailConfig {
+  title: string;
+  badge: string;
+}
+
 export interface LongEpisodeData {
   id: string;
   slug: string;
   title: string;
+  preset?: PresetId;
+  thumbnail?: LongEpisodeThumbnailConfig;
   facts: Fact[];
   chapters: Chapter[];
   voiceoverSrc?: string;

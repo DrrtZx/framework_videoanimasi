@@ -3,12 +3,9 @@ import { existsSync, mkdirSync, renameSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import ffmpegPath from "ffmpeg-static";
+import { loadPresetManifest } from "./lib/presets.mjs";
 
-/**
- * Filter Chain Warm Bass EQ:
- * highpass=f=75,equalizer=f=135:t=q:w=1.1:g=5.0,equalizer=f=240:t=q:w=1.2:g=2.5,equalizer=f=3200:t=q:w=1.4:g=-3.5,equalizer=f=5500:t=q:w=1.5:g=-3.0,acompressor=threshold=-18dB:ratio=3:attack=10:release=100,loudnorm=I=-16:TP=-1.5:LRA=11
- */
-const WARM_BASS_FILTER =
+const DEFAULT_WARM_BASS_FILTER =
   "highpass=f=75," +
   "equalizer=f=135:t=q:w=1.1:g=5.0," +
   "equalizer=f=240:t=q:w=1.2:g=2.5," +
@@ -24,24 +21,44 @@ function resolveFfmpegBin() {
   return "ffmpeg";
 }
 
-function main() {
-  const args = process.argv.slice(2);
-  const inputArg = args[0];
+function parseCliArgs(rawArgs) {
+  let presetId = "jokowo";
+  const positional = [];
 
-  if (!inputArg) {
-    console.log("Usage: node scripts/master-vo.mjs <input-audio-file> [output-filename.wav]");
-    console.log("Contoh: node scripts/master-vo.mjs out/kopi-luwak/voiceover.mp3");
-    console.log("Defaulting to sample check...");
+  for (const arg of rawArgs) {
+    if (arg.startsWith("--preset=")) {
+      presetId = arg.replace("--preset=", "").trim().toLowerCase() || "jokowo";
+    } else {
+      positional.push(arg);
+    }
   }
 
-  const outDir = path.resolve(process.cwd(), "public/audio/vo");
+  return {
+    presetId,
+    inputArg: positional[0],
+    outputArg: positional[1],
+  };
+}
+
+function main() {
+  const { presetId, inputArg, outputArg } = parseCliArgs(process.argv.slice(2));
+  const manifest = loadPresetManifest(presetId);
+  const outDir = path.resolve(
+    process.cwd(),
+    manifest.voDir || path.join("public/audio/vo", presetId)
+  );
+  const eqName = manifest.audio?.voiceEqName || "Warm Bass EQ";
+  const eqFilter = manifest.audio?.voiceEqFilter || DEFAULT_WARM_BASS_FILTER;
+
   if (!existsSync(outDir)) {
     mkdirSync(outDir, { recursive: true });
   }
 
   if (!inputArg) {
-    console.log(`[master-vo] Menyiapkan direktori target: ${outDir}`);
-    console.log("[master-vo] Siap memproses audio saat file dikirimkan pengguna.");
+    console.log("Usage: node scripts/master-vo.mjs <input-audio-file> [output-filename.wav] [--preset=<id>]");
+    console.log(`Contoh: node scripts/master-vo.mjs out/${presetId}/shorts/episode-baru/voiceover.mp3 episode-baru-vo.wav --preset=${presetId}`);
+    console.log(`[master-vo] Preset aktif: ${manifest.id} (${eqName})`);
+    console.log(`[master-vo] Direktori target siap: ${outDir}`);
     return;
   }
 
@@ -51,7 +68,8 @@ function main() {
     process.exit(1);
   }
 
-  const baseName = args[1] || `${path.basename(inputPath, path.extname(inputPath))}-mastered.wav`;
+  const baseName =
+    outputArg || `${path.basename(inputPath, path.extname(inputPath))}-mastered.wav`;
   const outputPath = path.join(outDir, baseName.endsWith(".wav") ? baseName : `${baseName}.wav`);
   const samePath =
     process.platform === "win32"
@@ -61,9 +79,10 @@ function main() {
   const targetWritePath = samePath ? tempOutputPath : outputPath;
   const ffmpegBin = resolveFfmpegBin();
 
-  console.log(`[master-vo] Memproses: ${inputPath}`);
-  console.log(`[master-vo] Output: ${outputPath}`);
-  console.log(`[master-vo] Menerapkan Warm Bass EQ chain...`);
+  console.log(`[master-vo] Preset : ${manifest.id} (${eqName})`);
+  console.log(`[master-vo] Input  : ${inputPath}`);
+  console.log(`[master-vo] Output : ${outputPath}`);
+  console.log(`[master-vo] Menerapkan ${eqName} chain...`);
 
   try {
     const ffmpegArgs = [
@@ -71,7 +90,7 @@ function main() {
       "-i",
       inputPath,
       "-af",
-      WARM_BASS_FILTER,
+      eqFilter,
       "-ar",
       "44100",
       "-ac",
@@ -87,7 +106,6 @@ function main() {
     }
     console.log(`[master-vo] BERHASIL! Audio master disimpan di: ${outputPath}`);
 
-    // Jalankan silencedetect untuk informasi sinkronisasi (FFmpeg menulis log filter ke stderr)
     console.log(`[master-vo] Menganalisis jeda bicara (silencedetect)...`);
     const detectArgs = [
       "-i",

@@ -1,6 +1,7 @@
 import React from "react";
 import { Audio, Loop, Sequence, staticFile } from "remotion";
-import { AUDIO_LEVELS } from "../config";
+import { AUDIO_LEVELS } from "../core/config";
+import type { PresetAudioLevels } from "../presets/types";
 
 export interface SfxCueItem {
   frame: number;
@@ -12,6 +13,7 @@ export interface ShortsAudioMixProps {
   voiceoverSrc?: string;
   sfxCues?: SfxCueItem[];
   bgmSrc?: string;
+  audioLevels?: PresetAudioLevels;
   durationInFrames: number;
 }
 
@@ -19,6 +21,7 @@ export const ShortsAudioMix: React.FC<ShortsAudioMixProps> = ({
   voiceoverSrc,
   sfxCues = [],
   bgmSrc = staticFile("audio/music/bgm-loop.wav"),
+  audioLevels = AUDIO_LEVELS,
   durationInFrames,
 }) => {
   const children: React.ReactNode[] = [];
@@ -29,7 +32,7 @@ export const ShortsAudioMix: React.FC<ShortsAudioMixProps> = ({
       React.createElement(Audio, {
         key: "vo-track",
         src: voiceoverSrc,
-        volume: AUDIO_LEVELS.vo,
+        volume: audioLevels.vo,
       })
     );
   }
@@ -50,7 +53,7 @@ export const ShortsAudioMix: React.FC<ShortsAudioMixProps> = ({
         },
         React.createElement(Audio, {
           src: cue.src,
-          volume: cue.volume ?? AUDIO_LEVELS.sfx,
+          volume: cue.volume ?? audioLevels.sfx,
           playbackRate: 1,
         })
       )
@@ -65,7 +68,7 @@ export const ShortsAudioMix: React.FC<ShortsAudioMixProps> = ({
         durationInFrames: Math.max(1, durationInFrames),
         children: React.createElement(Audio, {
           src: bgmSrc,
-          volume: AUDIO_LEVELS.bgmNormal,
+          volume: audioLevels.bgmNormal,
         }),
       })
     );

@@ -1,11 +1,12 @@
 import React from "react";
-import { PALETTE, CAPTION_CONFIG } from "../config";
-import { FONTS } from "../fonts";
+import { getPreset } from "../presets";
+import type { PresetConfig } from "../presets/types";
 
 export interface CaptionProps {
   text: string;
   activeWord?: string;
   variant?: "shorts" | "long";
+  preset?: PresetConfig;
   style?: React.CSSProperties;
 }
 
@@ -13,9 +14,13 @@ export const Caption: React.FC<CaptionProps> = ({
   text,
   activeWord,
   variant = "shorts",
+  preset = getPreset(),
   style = {},
 }) => {
-  const config = CAPTION_CONFIG[variant];
+  const config = preset.caption[variant];
+  const captionColor = preset.palette.captionText;
+  const activeColor = preset.palette.captionActive;
+  const strokeColor = preset.palette.captionStroke;
 
   // Tampilkan seluruh kata dari dialog beat tanpa pemotongan liar
   const words = text.trim().split(/\s+/).filter(Boolean);
@@ -39,17 +44,17 @@ export const Caption: React.FC<CaptionProps> = ({
     >
       <div
         style={{
-          fontFamily: FONTS.caption,
+          fontFamily: preset.fonts.caption,
           fontSize: `${config.fontSize}px`,
           fontWeight: 900,
-          color: "#FFFFFF",
+          color: captionColor,
           lineHeight: 1.2,
           letterSpacing: "1px",
           textTransform: "uppercase",
           /* WAJIB: Tanpa kotak background, outline tebal 12px + shadow */
-          WebkitTextStroke: `${config.strokeWidth}px #000000`,
+          WebkitTextStroke: `${config.strokeWidth}px ${strokeColor}`,
           paintOrder: "stroke fill",
-          textShadow: "0 8px 0 #000000, 0 12px 20px rgba(0, 0, 0, 0.4)",
+          textShadow: `0 8px 0 ${strokeColor}, 0 12px 20px rgba(0, 0, 0, 0.4)`,
           wordBreak: "break-word",
         }}
       >
@@ -63,9 +68,9 @@ export const Caption: React.FC<CaptionProps> = ({
             <span
               key={`${word}-${idx}`}
               style={{
-                color: isActive ? PALETTE.accentYellow : "#FFFFFF",
+                color: isActive ? activeColor : captionColor,
                 display: "inline-block",
-                margin: "0 8px",
+                margin: isActive ? "0 18px" : "0 10px",
                 transform: isActive ? "scale(1.08)" : "scale(1.0)",
               }}
             >

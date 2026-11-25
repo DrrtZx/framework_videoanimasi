@@ -1,3 +1,4 @@
+import { isValidPresetId } from "../presets";
 import type { EpisodeData } from "./types";
 
 export interface ValidationResult {
@@ -9,7 +10,7 @@ export interface ValidationResult {
  * Validasi aturan episode Shorts:
  * 1. Alur wajib: HOOK diawal -> minimal ada FAKTA -> minimal ada TWIST -> diakhiri OUTRO (atau PUNCHLINE lalu OUTRO)
  * 2. Seluruh URL sumber fakta (fact.source) WAJIB diawali dengan https://
- * 3. Minimal 3 scene, maksimal 10 scene
+ * 3. Preset (jika diisi) wajib terdaftar di src/presets/index.ts
  */
 export function validateEpisode(data: EpisodeData): ValidationResult {
   const errors: string[] = [];
@@ -17,6 +18,11 @@ export function validateEpisode(data: EpisodeData): ValidationResult {
   if (!data.id) errors.push("Episode wajib memiliki ID");
   if (!data.slug) errors.push("Episode wajib memiliki slug");
   if (!data.title) errors.push("Episode wajib memiliki title");
+  if (data.preset !== undefined && !isValidPresetId(data.preset)) {
+    errors.push(
+      `Preset '${String(data.preset)}' tidak terdaftar di src/presets/index.ts`
+    );
+  }
 
   // Validasi URL Fakta
   if (!data.facts || data.facts.length === 0) {

@@ -6,9 +6,9 @@ import {
   useVideoConfig,
   spring,
   interpolate,
+  staticFile,
 } from "remotion";
 import { Scene } from "./Scene";
-import { Jokowo } from "./Jokowo";
 import { Caption } from "./Caption";
 import { Prop } from "./Prop";
 import { StageProp } from "./StageProp";
@@ -16,14 +16,23 @@ import { Sfx } from "./Sfx";
 import { SpeechBubble } from "./SpeechBubble";
 import { ShortsAudioMix } from "../lib/audio-mix";
 import { getSfxStaticPath } from "../lib/sfx-events";
-import type { EpisodeData, Scene as SceneData, Pose } from "../episodes/types";
-import type { PropType } from "./Prop";
+import { getPreset } from "../presets";
+import type { PresetConfig } from "../presets/types";
+import type {
+  EpisodeData,
+  EyeTarget,
+  Pose,
+  PropFocusMode,
+  PropType,
+  Scene as SceneData,
+} from "../episodes/types";
 
 export type EpisodeProps = {
   episode: EpisodeData;
 };
 
 export const Episode: React.FC<EpisodeProps> = ({ episode }) => {
+  const preset = getPreset(episode.preset);
   let accumulatedFrame = 0;
 
   // Kumpulkan seluruh SFX audio cue dengan frame mulai presisi per beat
@@ -52,7 +61,7 @@ export const Episode: React.FC<EpisodeProps> = ({ episode }) => {
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0A192F" }}>
+    <AbsoluteFill style={{ backgroundColor: preset.palette.bg }}>
       {episode.scenes.map((scene, scIdx) => {
         const from = accumulatedFrame;
         const duration = scene.durationInFrames;
@@ -70,15 +79,18 @@ export const Episode: React.FC<EpisodeProps> = ({ episode }) => {
               sceneStartFrame={from}
               totalDuration={totalDuration}
               rmsFrames={episode.rmsFrames}
+              preset={preset}
             />
           </Sequence>
         );
       })}
 
-      {/* Audio Mix Shorts (VO 100%, SFX berjadwal presisi 40%, BGM 12%) */}
+      {/* Audio Mix Shorts sesuai profil preset */}
       <ShortsAudioMix
         voiceoverSrc={episode.voiceoverSrc}
         sfxCues={allSfxCues}
+        bgmSrc={staticFile(preset.audio.bgmSrc)}
+        audioLevels={preset.audio.levels}
         durationInFrames={totalDuration}
       />
     </AbsoluteFill>
@@ -91,6 +103,7 @@ interface SingleShortsSceneProps {
   sceneStartFrame: number;
   totalDuration: number;
   rmsFrames?: readonly number[];
+  preset: PresetConfig;
 }
 
 const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
@@ -99,10 +112,12 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
   sceneStartFrame,
   totalDuration,
   rmsFrames,
+  preset,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const globalFrame = sceneStartFrame + frame;
+  const Mascot = preset.Mascot;
 
   // 1. Hitung beat aktif dan start/durasi masing-masing beat secara presisi
   let activeBeatIndex = 0;
@@ -125,6 +140,8 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
 
   const currentBeat = scene.beats[activeBeatIndex] || scene.beats[0];
   const prevBeat = activeBeatIndex > 0 ? scene.beats[activeBeatIndex - 1] : null;
+  const nextBeat =
+    activeBeatIndex < scene.beats.length - 1 ? scene.beats[activeBeatIndex + 1] : null;
   const currentBeatDuration =
     currentBeat.durationInFrames ??
     Math.floor(scene.durationInFrames / Math.max(1, scene.beats.length));
@@ -144,27 +161,25 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
   }
   const propElapsedFrame = frame - propGroupStart;
 
-  // 3. Lip-sync & Audio Equalizer berbasis RMS WAV nyata (fallback ke simulasi ritme jika belum ada RMS)
+  // 3. Lip-sync & Audio Equalizer berbasis RMS WAV nyata
   let rmsLevel = 0;
   if (rmsFrames && rmsFrames.length > 0) {
     const idx = Math.max(0, Math.min(rmsFrames.length - 1, globalFrame));
     const idxPrev = Math.max(0, idx - 1);
-    // Smoothing ringan 2-frame agar gerakan mulut mulus dan ekspresif
-    rmsLevel = ((rmsFrames[idx] + rmsFrames[idxPrev]) / 200);
+    rmsLevel = (rmsFrames[idx] + rmsFrames[idxPrev]) / 200;
   } else {
     const isSpeaking = localFrame < currentBeatDuration - 4;
     rmsLevel = isSpeaking ? Math.abs(Math.sin((frame / fps) * 16)) * 0.85 : 0;
   }
   const mouthOpen = rmsLevel;
 
-  // 4. Blocking & Gerak Karakter Jokowo yang Mulus (Berjalan otomatis saat berpindah X!)
+  // 4. Blocking & Gerak Karakter + Interpolasi Sendi Mulus
   const transitionSpring = spring({
     frame: localFrame,
     fps,
     config: { damping: 15, stiffness: 150, mass: 0.85 },
   });
 
-  // Pada awal scene 0 beat 0, Jokowo berjalan masuk panggung dari kiri!
   const defaultPrevX = sceneIndex === 0 && activeBeatIndex === 0 ? -340 : 0;
   const fromX = prevBeat ? (prevBeat.charX ?? 0) : defaultPrevX;
   const toX = currentBeat.charX ?? 0;
@@ -174,21 +189,85 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
   const toY = currentBeat.charY ?? 0;
   const currentCharY = interpolate(transitionSpring, [0, 1], [fromY, toY]);
 
-  const fromScale = prevBeat ? (prevBeat.charScale ?? 2.0) : 2.0;
-  const toScale = currentBeat.charScale ?? 2.0;
+  const defaultScale = preset.mascotLayout.shortsDefaultScale;
+  const fromScale = prevBeat ? (prevBeat.charScale ?? defaultScale) : defaultScale;
+  const toScale = currentBeat.charScale ?? defaultScale;
   const currentCharScale = interpolate(transitionSpring, [0, 1], [fromScale, toScale]);
 
-  // Jika sedang melangkah jauh secara horizontal di 14 frame pertama beat, aktifkan animasi berjalan!
   const moveDeltaX = toX - fromX;
   const isWalkingTransition = Math.abs(moveDeltaX) >= 55 && localFrame < 14;
   const activePose: Pose = isWalkingTransition
     ? "walking"
     : (currentBeat.pose ?? "talking");
+  const rawPrevPose: Pose = prevBeat
+    ? (prevBeat.pose ?? "talking")
+    : sceneIndex === 0 && activeBeatIndex === 0
+      ? "walking"
+      : "talking";
+  const poseTransitionProgress = isWalkingTransition ? 1 : transitionSpring;
   const activeFlip = isWalkingTransition
     ? moveDeltaX < 0
     : Boolean(currentBeat.charFlip);
 
-  // 5. Koreografi Kamera Halus per Beat (Wide -> Medium -> Close-Up -> Relax)
+  // 5. Dynamic Prop Focus System: "co-push" (sama-sama maju) & "hero-pop" (maju lewati maskot lalu mundur)
+  const rawFocusMode: PropFocusMode = currentBeat.propFocus ?? "normal";
+  const prevFocusMode: PropFocusMode = prevBeat?.propFocus ?? "normal";
+  const nextFocusMode: PropFocusMode = nextBeat?.propFocus ?? "normal";
+
+  const coPushAmount = interpolate(
+    transitionSpring,
+    [0, 1],
+    [prevFocusMode === "co-push" ? 1 : 0, rawFocusMode === "co-push" ? 1 : 0]
+  );
+
+  const heroEnter =
+    rawFocusMode === "hero-pop"
+      ? prevFocusMode === "hero-pop"
+        ? 1
+        : spring({
+            frame: localFrame,
+            fps,
+            config: { damping: 13, stiffness: 190, mass: 0.8 },
+          })
+      : 0;
+  const retractStart = Math.max(14, currentBeatDuration - 12);
+  const heroExit =
+    rawFocusMode === "hero-pop" &&
+    nextFocusMode !== "hero-pop" &&
+    localFrame >= retractStart
+      ? spring({
+          frame: localFrame - retractStart,
+          fps,
+          config: { damping: 16, stiffness: 180, mass: 0.75 },
+        })
+      : 0;
+  const heroAmount = Math.max(0, Math.min(1, heroEnter - heroExit));
+
+  const propTop = 190 - coPushAmount * 22 + heroAmount * 290;
+  const propScale = 1 + coPushAmount * 0.12 + heroAmount * 0.22;
+  const propZIndex = heroAmount > 0.15 ? 36 : 22;
+  const shadowY = Math.round(12 + heroAmount * 28 + coPushAmount * 8);
+  const shadowBlur = Math.round(18 + heroAmount * 36 + coPushAmount * 10);
+  const shadowAlpha = (0.28 + heroAmount * 0.45 + coPushAmount * 0.12).toFixed(2);
+
+  const effectiveCharScale = currentCharScale * (1 + coPushAmount * 0.11 - heroAmount * 0.08);
+  const mascotBottom =
+    preset.mascotLayout.shortsBottom - currentCharY - coPushAmount * 15;
+  const mascotFilter =
+    heroAmount > 0.02
+      ? `blur(${(heroAmount * 4.5).toFixed(2)}px) brightness(${(1 - heroAmount * 0.32).toFixed(2)})`
+      : undefined;
+
+  // Lirikan mata otomatis mengarah ke komponen saat menunjuk/co-push/penasaran
+  const activeEyeTarget: EyeTarget =
+    currentBeat.eyeTarget ??
+    (activePose === "pointing" ||
+    rawFocusMode === "co-push" ||
+    currentBeat.expression === "curious"
+      ? "prop"
+      : "camera");
+
+  // 6. Koreografi Kamera Halus per Beat
   const camSpring = spring({
     frame: localFrame,
     fps,
@@ -216,7 +295,6 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
       ? { frame: beatStartFrame + 2, intensity: shakeIntensity, duration: 16 }
       : undefined;
 
-  // Teks komik SFX onomatopoeia (hanya tampil jika sfxLabel ditentukan, atau fallback untuk legacy sample-shorts)
   const comicSfxText =
     currentBeat.sfxLabel ?? (!currentBeat.stageProp ? currentBeat.sfx : undefined);
 
@@ -226,7 +304,8 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
   return (
     <AbsoluteFill>
       <Scene
-        theme={scene.theme ?? "cyber-blueprint"}
+        preset={preset}
+        theme={scene.theme ?? preset.defaultTheme}
         sceneTransition={scene.sceneTransition ?? "none"}
         cameraScale={cameraScale}
         cameraPanX={cameraPanX}
@@ -235,18 +314,55 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
         progress={totalProgress}
         rmsLevel={rmsLevel}
       >
-        {/* ================= 1. STAGE PROP INTERAKTIF / LEGACY PROP (ZONA ATAS AMAN DARI HUD & ZOOM) ================= */}
+        {/* ================= 1. MASKOT PRESET DI ATAS LANTAI PANGGUNG ================= */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: `${mascotBottom}px`,
+            left: "50%",
+            transform: `translateX(calc(-50% + ${currentCharX}px))`,
+            filter: mascotFilter,
+            zIndex: 25,
+          }}
+        >
+          <Mascot
+            pose={activePose}
+            prevPose={rawPrevPose}
+            poseTransitionProgress={poseTransitionProgress}
+            expression={currentBeat.expression ?? "neutral"}
+            eyeTarget={activeEyeTarget}
+            mouthOpen={mouthOpen}
+            scale={effectiveCharScale}
+            flip={activeFlip}
+          />
+        </div>
+
+        {/* ================= 2. SCRIM FOKUS SAAT KOMPONEN HERO-POP MAJU ================= */}
+        {heroAmount > 0.02 && (
+          <AbsoluteFill
+            style={{
+              backgroundColor: `rgba(3, 7, 18, ${(heroAmount * 0.34).toFixed(3)})`,
+              zIndex: 28,
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
+        {/* ================= 3. STAGE PROP INTERAKTIF / LEGACY PROP ================= */}
         {currentBeat.stageProp ? (
           <div
             style={{
               position: "absolute",
-              top: "190px",
+              top: `${propTop}px`,
               left: 0,
               right: 0,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              zIndex: 18,
+              transform: `scale(${propScale})`,
+              transformOrigin: "center top",
+              filter: `drop-shadow(0 ${shadowY}px ${shadowBlur}px rgba(0, 0, 0, ${shadowAlpha}))`,
+              zIndex: propZIndex,
               pointerEvents: "none",
             }}
           >
@@ -279,7 +395,7 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
           </div>
         ) : null}
 
-        {/* ================= 2. BALON BICARA OPSIONAL (JIKA ADA) ================= */}
+        {/* ================= 4. BALON BICARA OPSIONAL ================= */}
         {currentBeat.speechBubble && (
           <div
             style={{
@@ -296,30 +412,12 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
               text={currentBeat.speechBubble}
               position="top"
               delay={beatStartFrame + 5}
+              preset={preset}
             />
           </div>
         )}
 
-        {/* ================= 3. KARAKTER JOKOWO DI ATAS LANTAI PANGGUNG 3D ================= */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: `${450 - currentCharY}px`,
-            left: "50%",
-            transform: `translateX(calc(-50% + ${currentCharX}px))`,
-            zIndex: 25,
-          }}
-        >
-          <Jokowo
-            pose={activePose}
-            expression={currentBeat.expression ?? "neutral"}
-            mouthOpen={mouthOpen}
-            scale={currentCharScale}
-            flip={activeFlip}
-          />
-        </div>
-
-        {/* ================= 4. SFX COMIC POP-OUT TERJADWAL PER BEAT ================= */}
+        {/* ================= 5. SFX COMIC POP-OUT TERJADWAL PER BEAT ================= */}
         {comicSfxText && (
           <Sfx
             key={`sfx-pop-${activeBeatIndex}-${comicSfxText}`}
@@ -327,8 +425,9 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
             delay={beatStartFrame + 3}
             duration={24}
             fontSize={64}
+            preset={preset}
             style={{
-              top: "665px",
+              top: heroAmount > 0.2 ? "310px" : "665px",
               left: toX > 40 ? "115px" : undefined,
               right: toX <= 40 ? "115px" : undefined,
             }}
@@ -336,12 +435,13 @@ const SingleShortsScene: React.FC<SingleShortsSceneProps> = ({
         )}
       </Scene>
 
-      {/* ================= 5. CAPTION SHORTS (TERPISAH DARI ZOOM KAMERA AGAR SELALU TAJAM & AMAN!) ================= */}
+      {/* ================= 6. CAPTION SHORTS (DI LUAR ZOOM KAMERA!) ================= */}
       {/* CATATAN: DILARANG MERENDER beat.headline atau badge scene.kind */}
       <Caption
         text={currentBeat.dialogue}
         activeWord={currentBeat.activeWord}
         variant="shorts"
+        preset={preset}
       />
     </AbsoluteFill>
   );

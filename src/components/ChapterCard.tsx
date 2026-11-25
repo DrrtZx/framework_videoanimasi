@@ -1,19 +1,21 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
-import { PALETTE } from "../config";
-import { FONTS } from "../fonts";
 import { popIn } from "../lib/anim";
+import { getPreset } from "../presets";
+import type { PresetConfig } from "../presets/types";
 
 export interface ChapterCardProps {
   title: string;
   chapterNumber: number;
   durationInFrames?: number;
+  preset?: PresetConfig;
 }
 
 export const ChapterCard: React.FC<ChapterCardProps> = ({
   title,
   chapterNumber,
   durationInFrames = 60,
+  preset = getPreset(),
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -48,7 +50,7 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
           display: "inline-flex",
           flexDirection: "column",
           backgroundColor: "#FFFFFF",
-          border: `3px solid ${PALETTE.ink}`,
+          border: `3px solid ${preset.palette.ink}`,
           borderRadius: "16px",
           padding: "16px 28px",
           boxShadow: "0 8px 0 rgba(30, 41, 59, 0.2)",
@@ -56,10 +58,10 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
       >
         <span
           style={{
-            fontFamily: FONTS.label,
+            fontFamily: preset.fonts.label,
             fontSize: "18px",
             fontWeight: 800,
-            color: PALETTE.accentBlue,
+            color: preset.palette.accentBlue,
             letterSpacing: "1.5px",
             textTransform: "uppercase",
             marginBottom: "4px",
@@ -69,10 +71,10 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
         </span>
         <span
           style={{
-            fontFamily: FONTS.title,
+            fontFamily: preset.fonts.title,
             fontSize: "32px",
             fontWeight: 900,
-            color: PALETTE.ink,
+            color: preset.palette.ink,
           }}
         >
           {title}

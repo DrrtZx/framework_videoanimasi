@@ -1,0 +1,82 @@
+{
+  "id": "jokowo",
+  "name": "Jokowo",
+  "concept": "Clean Studio & Tech Explainer",
+  "description": "Maskot edukasi sains & teknologi dengan kemeja putih saku batik cyan di atas panggung clean studio modern.",
+  "outputDir": "out/jokowo",
+  "voDir": "public/audio/vo/jokowo",
+  "stageStyle": "clean-studio",
+  "defaultTheme": "cyber-blueprint",
+  "palette": {
+    "bg": "#0A192F",
+    "bgLight": "#0F2942",
+    "bgCenter": "#0F325E",
+    "bgOuter": "#020612",
+    "gridMajor": "#38BDF8",
+    "gridMinor": "#0284C7",
+    "ink": "#0F172A",
+    "blueprintCyan": "#00F5FF",
+    "accentBlue": "#38BDF8",
+    "accentPurple": "#818CF8",
+    "accentYellow": "#FACC15",
+    "accentGreen": "#10B981",
+    "white": "#FFFFFF",
+    "captionText": "#FFFFFF",
+    "captionActive": "#FACC15",
+    "captionStroke": "#000000"
+  },
+  "caption": {
+    "shorts": {
+      "bottom": 380,
+      "fontSize": 58,
+      "maxWords": 4,
+      "strokeWidth": 12
+    },
+    "long": {
+      "bottom": 110,
+      "fontSize": 50,
+      "maxWords": 6,
+      "strokeWidth": 12
+    }
+  },
+  "mascotLayout": {
+    "shortsBottom": 450,
+    "shortsDefaultScale": 2.0,
+    "longRight": 260,
+    "longBottom": 160,
+    "longDefaultScale": 1.4,
+    "thumbnailShortsScale": 3.0,
+    "thumbnailLongScale": 2.1,
+    "bannerScale": 1.48,
+    "avatarScale": 4.0
+  },
+  "audio": {
+    "bgmSrc": "audio/music/bgm-loop.wav",
+    "voiceEqName": "Warm Bass EQ",
+    "voiceEqFilter": "highpass=f=75,equalizer=f=135:t=q:w=1.1:g=5.0,equalizer=f=240:t=q:w=1.2:g=2.5,equalizer=f=3200:t=q:w=1.4:g=-3.5,equalizer=f=5500:t=q:w=1.5:g=-3.0,acompressor=threshold=-18dB:ratio=3:attack=10:release=100,loudnorm=I=-16:TP=-1.5:LRA=11",
+    "levels": {
+      "vo": 1.0,
+      "sfx": 0.4,
+      "bgmNormal": 0.12,
+      "bgmDucked": 0.04
+    }
+  },
+  "branding": {
+    "channelName": "FAKTA STUDIO",
+    "tagline": "EDUKASI SAINS & TEKNOLOGI",
+    "kicker": "CHANNEL ANIMASI EDUKASI",
+    "coordLabel": "FAKTA.STUDIO // CLEAN",
+    "footerKeywords": "SAINS · TEKNOLOGI · SEJARAH KOMPUTASI · FAKTA UNIK",
+    "defaultShortsThumbnail": {
+      "title": "CPU iGPU VS TANPA iGPU!",
+      "subtitle": "JANGAN SALAH BELI!",
+      "floatingProps": ["cpu", "gpu", "question-mark", "lightbulb"]
+    },
+    "defaultLongThumbnail": {
+      "title": "DARI MANA ASAL OKSIGEN BUMI?",
+      "badge": "BUKAN HUTAN AMAZON!"
+    },
+    "defaultShortsHashtags": ["#teknologi", "#edukasi", "#faktaunik", "#shorts"],
+    "defaultLongHashtags": ["#FaktaStudio", "#Sains", "#Teknologi"]
+  }
+}

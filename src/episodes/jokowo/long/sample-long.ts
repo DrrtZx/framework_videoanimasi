@@ -1,9 +1,14 @@
-import type { LongEpisodeData } from "./long-types";
+import type { LongEpisodeData } from "../../long-types";
 
 export const sampleLongEpisode: LongEpisodeData = {
   id: "long-misteri-oksigen-bumi",
   slug: "misteri-oksigen-bumi",
   title: "Dari Mana Asal Oksigen Bumi Sebenarnya?",
+  preset: "jokowo",
+  thumbnail: {
+    title: "DARI MANA ASAL OKSIGEN BUMI?",
+    badge: "BUKAN HUTAN AMAZON!",
+  },
   facts: [
     {
       claim: "Lebih dari 50% oksigen di atmosfer bumi diproduksi oleh fitoplankton di samudra, bukan hutan hujan Amazon.",

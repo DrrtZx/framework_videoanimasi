@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { validateEpisode } from "../src/episodes/validate";
 import { validateLongEpisode } from "../src/episodes/long-validate";
-import { sampleShortsEpisode } from "../src/episodes/sample-shorts";
-import { episodeAsalUsulBug } from "../src/episodes/episode-asal-usul-bug";
-import { episodeCpuIgpuVsNonIgpu } from "../src/episodes/episode-cpu-igpu-vs-non-igpu";
-import { sampleLongEpisode } from "../src/episodes/sample-long";
+import { sampleShortsEpisode } from "../src/episodes/jokowo/shorts/sample-shorts";
+import { episodeAsalUsulBug } from "../src/episodes/jokowo/shorts/asal-usul-bug/episode";
+import { episodeCpuIgpuVsNonIgpu } from "../src/episodes/jokowo/shorts/cpu-igpu-vs-non-igpu/episode";
+import { sampleLongEpisode } from "../src/episodes/jokowo/long/sample-long";
 import type { EpisodeData } from "../src/episodes/types";
 import type { LongEpisodeData } from "../src/episodes/long-types";
+import type { PresetId } from "../src/presets";
 
 describe("Validasi Episode Shorts", () => {
   it("harus meloloskan sampleShortsEpisode", () => {
@@ -29,6 +30,16 @@ describe("Validasi Episode Shorts", () => {
       const beatSum = sc.beats.reduce((acc, b) => acc + (b.durationInFrames ?? 0), 0);
       expect(beatSum).toBe(sc.durationInFrames);
     });
+  });
+
+  it("harus menolak jika preset episode tidak terdaftar", () => {
+    const invalid: EpisodeData = {
+      ...sampleShortsEpisode,
+      preset: "maskot-tidak-terdaftar" as PresetId,
+    };
+    const res = validateEpisode(invalid);
+    expect(res.valid).toBe(false);
+    expect(res.errors.some((e) => e.includes("Preset"))).toBe(true);
   });
 
   it("harus menolak jika scene pertama bukan HOOK", () => {
@@ -79,6 +90,16 @@ describe("Validasi Long Episode (16:9)", () => {
     const res = validateLongEpisode(sampleLongEpisode);
     expect(res.valid).toBe(true);
     expect(res.errors).toHaveLength(0);
+  });
+
+  it("harus menolak jika preset long episode tidak terdaftar", () => {
+    const invalid: LongEpisodeData = {
+      ...sampleLongEpisode,
+      preset: "maskot-fiktif" as PresetId,
+    };
+    const res = validateLongEpisode(invalid);
+    expect(res.valid).toBe(false);
+    expect(res.errors.some((e) => e.includes("Preset"))).toBe(true);
   });
 
   it("harus menolak jika chapter kurang dari 5", () => {

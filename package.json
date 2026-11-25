@@ -10,7 +10,9 @@
     "test": "vitest run",
     "generate:sfx": "node scripts/generate-sfx.mjs",
     "master:vo": "node scripts/master-vo.mjs",
-    "render": "node scripts/render.mjs"
+    "render": "node scripts/render.mjs",
+    "preset:new": "node scripts/create-preset.mjs",
+    "preset:list": "node scripts/create-preset.mjs --list"
   },
   "dependencies": {
     "@remotion/cli": "4.0.544",

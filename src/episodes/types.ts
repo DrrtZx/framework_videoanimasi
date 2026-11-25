@@ -1,56 +1,27 @@
-export type SceneKind = "HOOK" | "FAKTA" | "TWIST" | "PUNCHLINE" | "OUTRO";
+import type { PresetId } from "../presets";
+import type {
+  SceneKind,
+  SceneTheme,
+  SceneTransitionType,
+  StagePropType,
+  PropType,
+  Expression,
+  Pose,
+  PropFocusMode,
+  EyeTarget,
+} from "../core/types";
 
-export type SceneTheme =
-  | "cyber-blueprint"
-  | "cyber-crash"
-  | "vintage-1947"
-  | "spotlight-twist"
-  | "archive-paper"
-  | "edison-1878"
-  | "neon-coder";
-
-export type SceneTransitionType =
-  | "none"
-  | "slide-left"
-  | "zoom-burst"
-  | "shutter"
-  | "flash";
-
-export type StagePropType =
-  | "app-crash"
-  | "bug-radar"
-  | "calendar-1947"
-  | "harvard-mark2"
-  | "hopper-inspect"
-  | "relay-moth-trap"
-  | "logbook-tape"
-  | "debugging-globe"
-  | "time-rewind"
-  | "edison-1878"
-  | "vs-compare"
-  | "ram-mosquito"
-  | "cta-comment"
-  | "pc-no-signal"
-  | "cpu-igpu-office"
-  | "cpu-f-disabled"
-  | "igpu-two-secrets"
-  | "cpu-vs-cta";
-
-export type Expression =
-  | "neutral"
-  | "curious"
-  | "shocked"
-  | "laughing"
-  | "storytelling"
-  | "amused";
-
-export type Pose =
-  | "idle"
-  | "talking"
-  | "pointing"
-  | "thinking"
-  | "walking"
-  | "celebrating";
+export type {
+  SceneKind,
+  SceneTheme,
+  SceneTransitionType,
+  StagePropType,
+  PropType,
+  Expression,
+  Pose,
+  PropFocusMode,
+  EyeTarget,
+};
 
 export interface Beat {
   headline: string; // INTERNAL ONLY - DILARANG DIRENDER DI LAYAR
@@ -63,12 +34,14 @@ export interface Beat {
   prop?: string; // Legacy simple icon prop
   stageProp?: StagePropType; // Prop adegan interaktif multi-elemen
   propVariant?: string; // Sub-state animasi prop (misal: "running" | "crashing" | "taping")
+  propFocus?: PropFocusMode; // "normal" | "co-push" (sama-sama maju) | "hero-pop" (maju lewati maskot)
+  eyeTarget?: EyeTarget; // Opsional arah lirikan mata ("camera" | "prop" | "left" | "right")
   speechBubble?: string;
   durationInFrames?: number; // Durasi frame spesifik untuk beat ini
-  // Koreografi blocking karakter Jokowo
+  // Koreografi blocking karakter
   charX?: number; // Offset horizontal dari tengah (-280 s/d +280)
   charY?: number; // Offset vertikal (negatif = naik / lompat)
-  charScale?: number; // Skala karakter (default ~2.05)
+  charScale?: number; // Skala karakter (default ~2.0)
   charFlip?: boolean; // Hadap kiri/kanan
   // Koreografi kamera dinamis per beat
   cameraZoom?: number; // 1.0 = wide, 1.15 = medium, 1.26 = punch close-up
@@ -91,10 +64,18 @@ export interface Fact {
   confidence: "verified" | "likely" | "uncertain"; // INTERNAL ONLY
 }
 
+export interface EpisodeThumbnailConfig {
+  title: string;
+  subtitle: string;
+  floatingProps?: [PropType, PropType, PropType, PropType];
+}
+
 export interface EpisodeData {
   id: string;
   slug: string;
   title: string;
+  preset?: PresetId;
+  thumbnail?: EpisodeThumbnailConfig;
   facts: Fact[];
   scenes: Scene[];
   voiceoverSrc?: string;

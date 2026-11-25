@@ -1,8 +1,8 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
-import { PALETTE } from "../config";
-import { FONTS } from "../fonts";
 import { popIn } from "../lib/anim";
+import { getPreset } from "../presets";
+import type { PresetConfig } from "../presets/types";
 import type { DiagramData } from "../episodes/long-types";
 
 export interface AnimatedDiagramProps {
@@ -10,6 +10,7 @@ export interface AnimatedDiagramProps {
   delay?: number;
   width?: number;
   height?: number;
+  preset?: PresetConfig;
   style?: React.CSSProperties;
 }
 
@@ -18,6 +19,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
   delay = 10,
   width = 650,
   height = 420,
+  preset = getPreset(),
   style = {},
 }) => {
   const frame = useCurrentFrame();
@@ -29,11 +31,12 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
     extrapolateRight: "clamp",
   });
 
+  const pal = preset.palette;
   const chartColors = [
-    PALETTE.accentBlue,
-    PALETTE.accentPurple,
-    PALETTE.accentYellow,
-    "#10B981", // Emerald
+    pal.accentBlue,
+    pal.accentPurple,
+    pal.accentYellow,
+    pal.accentGreen,
     "#F43F5E", // Rose
   ];
 
@@ -51,7 +54,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
             y1={height - 60}
             x2={width - 40}
             y2={height - 60}
-            stroke={PALETTE.ink}
+            stroke={pal.ink}
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -72,7 +75,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
                   height={Math.max(4, barH)}
                   rx="6"
                   fill={color}
-                  stroke={PALETTE.ink}
+                  stroke={pal.ink}
                   strokeWidth="2.5"
                 />
                 {/* Nilai di atas batang */}
@@ -80,10 +83,10 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
                   x={x + barWidth / 2}
                   y={y - 10}
                   textAnchor="middle"
-                  fontFamily={FONTS.label}
+                  fontFamily={preset.fonts.label}
                   fontSize="20"
                   fontWeight="800"
-                  fill={PALETTE.ink}
+                  fill={pal.ink}
                 >
                   {Math.round(val * animProgress)}%
                 </text>
@@ -92,7 +95,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
                   x={x + barWidth / 2}
                   y={height - 30}
                   textAnchor="middle"
-                  fontFamily={FONTS.label}
+                  fontFamily={preset.fonts.label}
                   fontSize="16"
                   fontWeight="700"
                   fill="#475569"
@@ -149,7 +152,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
               key={`pie-${idx}`}
               d={s.path}
               fill={s.color}
-              stroke={PALETTE.ink}
+              stroke={pal.ink}
               strokeWidth="2.5"
             />
           ))}
@@ -157,8 +160,8 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
           {/* Legenda di Kanan */}
           {slices.map((s, idx) => (
             <g key={`leg-${idx}`} transform={`translate(${width * 0.58}, ${height * 0.25 + idx * 45})`}>
-              <rect x="0" y="0" width="20" height="20" rx="4" fill={s.color} stroke={PALETTE.ink} strokeWidth="2" />
-              <text x="32" y="16" fontFamily={FONTS.label} fontSize="18" fontWeight="700" fill={PALETTE.ink}>
+              <rect x="0" y="0" width="20" height="20" rx="4" fill={s.color} stroke={pal.ink} strokeWidth="2" />
+              <text x="32" y="16" fontFamily={preset.fonts.label} fontSize="18" fontWeight="700" fill={pal.ink}>
                 {s.label} ({s.percent}%)
               </text>
             </g>
@@ -177,16 +180,16 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
               backgroundColor: chartColors[idx % chartColors.length],
               padding: "20px",
               borderRadius: "14px",
-              border: `3px solid ${PALETTE.ink}`,
+              border: `3px solid ${pal.ink}`,
               boxShadow: "0 6px 0 rgba(30, 41, 59, 0.2)",
               textAlign: "center",
               minWidth: "140px",
             }}
           >
-            <div style={{ fontFamily: FONTS.title, fontSize: "28px", fontWeight: 900, color: "#FFFFFF" }}>
+            <div style={{ fontFamily: preset.fonts.title, fontSize: "28px", fontWeight: 900, color: "#FFFFFF" }}>
               {data.values[idx] || 0}
             </div>
-            <div style={{ fontFamily: FONTS.label, fontSize: "16px", fontWeight: 700, color: PALETTE.ink }}>
+            <div style={{ fontFamily: preset.fonts.label, fontSize: "16px", fontWeight: 700, color: pal.ink }}>
               {lbl}
             </div>
           </div>
@@ -199,7 +202,7 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
     <div
       style={{
         backgroundColor: "#FFFFFF",
-        border: `3px solid ${PALETTE.ink}`,
+        border: `3px solid ${pal.ink}`,
         borderRadius: "24px",
         padding: "20px",
         boxShadow: "0 12px 0 rgba(30, 41, 59, 0.2)",
@@ -212,10 +215,10 @@ export const AnimatedDiagram: React.FC<AnimatedDiagramProps> = ({
       {data.title && (
         <div
           style={{
-            fontFamily: FONTS.title,
+            fontFamily: preset.fonts.title,
             fontSize: "26px",
             fontWeight: 800,
-            color: PALETTE.ink,
+            color: pal.ink,
             marginBottom: "10px",
             textAlign: "center",
           }}

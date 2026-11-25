@@ -35,32 +35,61 @@ Dokumen ini adalah aturan absolut dan panduan utama bagi AI Agent yang bekerja d
   - Judul / Caption / SFX: `Fredoka` (Rounded, punchy, ramah)
   - Balon Bicara / Label / Data: `Plus Jakarta Sans` (Sangat terbaca, modern & presisi)
 
-### CHARACTER IDENTITY LOCK (WAJIB)
-- **Karakter**: `Jokowo` — karakter original animasi pembawa wawasan ilmiah dengan sedikit kemiripan visual karikatur ramah Joko Widodo (bukan tiruan fotorealistis).
-- **Karakteristik Visual**:
-  - Kemeja putih santai kontras tinggi dengan aksen saku/kerah batik bermotif cyan blueprint (`#0EA5E9` / `#38BDF8`).
-  - Rambut belah samping hitam rapi, senyum bersahabat, postur ramping bersahaja.
-  - Komponen visual 100% SVG terstandarisasi di `src/components/Jokowo.tsx`.
-- **DILARANG** mendesain ulang karakter dari nol di setiap episode. Gunakan sistem komponen proporsional SVG modular yang sama untuk seluruh episode.
+### ARSITEKTUR MULTI-PRESET & CHARACTER IDENTITY LOCK (WAJIB)
+- Sistem menggunakan arsitektur **Multi-Preset Maskot (`src/presets/<preset-id>/`)**:
+  - Setiap maskot + konsep visual memiliki folder preset sendiri berisi `preset.json`, `themes.ts`, `Mascot.tsx`, `CHARACTER-SHEET.md`, dan `index.ts`.
+  - Episode berada di `src/episodes/<preset-id>/{shorts,long}/` dan terdaftar di `src/episodes/registry.ts` serta `<Folder name="<preset-id>">` pada `src/Root.tsx`.
+  - **Preset `#1`: `jokowo`** (Konsep: *Clean Studio & Tech Explainer*, default `stageStyle: "clean-studio"`):
+    - Latar studio gelap bersih dengan *ambient glow orbs* lembut tanpa garis grid/kotak yang ramai (mode `"blueprint"` tetap tersedia opsional untuk preset lain).
+    - Karakter original pembawa wawasan ilmiah ramah dengan kulit sawo matang natural, kemeja putih beraksen saku batik cyan (`#0EA5E9` / `#38BDF8`), rambut belah samping hitam rapi, sendi terartikulasi mulus antar-pose, serta *eye-tracking*.
+    - Komponen visual 100% SVG terstandarisasi di `src/presets/jokowo/Mascot.tsx` (beserta re-export kompatibilitas di `src/components/Jokowo.tsx`).
+  - Untuk menambah maskot/konsep baru tanpa merusak `jokowo`, gunakan `npm run preset:new -- <preset-id>` (panduan di `src/presets/_template/README.md`) lalu daftarkan ke `src/presets/index.ts`.
+- **DILARANG** mendesain ulang karakter dari nol di setiap episode. Gunakan komponen `Mascot.tsx` milik preset yang dipilih secara konsisten.
 
 ---
 
-## 2. Struktur Output per Episode
+## 2. Struktur Folder Proyek & Output per Preset
 
 ```
+src/
+├── core/                            # Engine bersama (config, fonts, shared types)
+├── presets/
+│   ├── index.ts                     # Registry getPreset(id), listPresets()
+│   ├── types.ts                     # Kontrak PresetConfig
+│   ├── _template/                   # Panduan membuat preset baru
+│   └── jokowo/                      # Preset #1: Jokowo (Tech Blueprint & Cyber Lab)
+│       ├── preset.json              # Palet, layout maskot, filter audio, branding, outputDir
+│       ├── Mascot.tsx               # Karakter SVG modular
+│       ├── themes.ts                # Tema panggung per scene
+│       ├── CHARACTER-SHEET.md       # Spesifikasi proporsi & ekspresi
+│       └── index.ts
+├── episodes/
+│   ├── registry.ts                  # Katalog episode terindeks per preset
+│   └── <preset>/                    # Misal: src/episodes/jokowo/
+│       ├── shorts/<slug>/{episode.ts, rms.ts}
+│       └── long/
+└── components/                      # Renderer netral preset (Episode, Scene, Caption, Banner, Avatar)
+
+public/audio/vo/<preset>/            # Audio master WAV per preset (gitignored)
+public/assets/episodes/<slug>/       # Aset foto/media asli ringan per episode (untuk Hybrid Photo + Motion)
+
 out/
-├── <slug>/                          # YouTube Shorts (9:16)
-│   ├── publikasi.md                 # Metadata publikasi & naskah
-│   ├── voiceover.mp3                # Audio sumber / master (atau nama file audio asli)
-│   ├── thumbnail.png                # 1080×1920
-│   └── video.mp4                    # 1080×1920 @ 30fps (H.264/AAC)
-│
-└── long/
-    └── <slug>/                      # Long Video YouTube (16:9)
-        ├── publikasi.md             # Metadata, naskah, dan Chapter Timestamp final
-        ├── voiceover/               # Audio master chapter-by-chapter atau utuh
-        ├── thumbnail.png            # 1280×720 (atau 1920×1080)
-        └── video.mp4                # 1920×1080 @ 30fps (4–8 menit)
+└── <preset>/                        # Misal: out/jokowo/
+    ├── branding/                    # Aset channel per preset
+    │   ├── banner.png               # 2560×1440
+    │   └── avatar.png               # 1080×1080
+    ├── shorts/
+    │   └── <slug>/                  # YouTube Shorts (9:16)
+    │       ├── publikasi.md         # Metadata publikasi & naskah
+    │       ├── voiceover.mp3        # Audio sumber (gitignored)
+    │       ├── thumbnail.png        # 1080×1920
+    │       └── video.mp4            # 1080×1920 @ 30fps (H.264/AAC)
+    └── long/
+        └── <slug>/                  # Long Video YouTube (16:9)
+            ├── publikasi.md         # Metadata, naskah, dan Chapter Timestamp final
+            ├── voiceover/           # Audio master chapter-by-chapter atau utuh
+            ├── thumbnail.png        # 1280×720 (atau 1920×1080)
+            └── video.mp4            # 1920×1080 @ 30fps (4–8 menit)
 ```
 
 > **Kebersihan Output**: File still preview sementara (`preview-*.png`, `still-*.png`) **wajib dihapus** setelah verifikasi visual lulus agar folder output hanya berisi aset final yang bersih.
@@ -72,7 +101,7 @@ out/
 ## 3. Alur Kerja Wajib 2-Tahap (Voice-First Workflow)
 
 ### TAHAP 1 — Bahan Dulu (JANGAN RENDER!)
-1. Buat folder `out/<slug>/` atau `out/long/<slug>/`.
+1. Tentukan preset target (`--preset=<id>`, default `jokowo`) lalu buat folder `out/<preset>/shorts/<slug>/` atau `out/<preset>/long/<slug>/`.
 2. Buat file `publikasi.md` sesuai tipe konten (**Mode YT Shorts** atau **Mode YT Long Video**, mengacu ke Bagian 6) berisi:
    - **Judul Utama Rekomendasi + 2 Opsi Alternatif** (mengikuti standar algoritma di Bagian 6 agar menembus ≥2.000 views & ≥20 likes).
    - **Deskripsi Video Siap Copy-Paste** sesuai formatnya:
@@ -87,34 +116,37 @@ out/
 3. **BERHENTI**: Laporkan draf ke pengguna dan **tunggu file audio dikirim**. Jangan render animasi sebelum audio ada!
 
 ### TAHAP 2 — Sinkronisasi Audio Verbatim, Koreografi & Render Presisi
-1. **Audio Mastering (Warm Bass EQ)**:
-   Proses file audio kiriman pengguna melalui:
+1. **Audio Mastering (Sesuai Profil Preset)**:
+   Proses file audio kiriman pengguna sesuai `--preset=<id>` (default `jokowo` dengan Warm Bass EQ):
    ```bash
-   node scripts/master-vo.mjs <path-ke-audio> <nama-output.wav>
+   node scripts/master-vo.mjs <path-ke-audio> <nama-output.wav> --preset=<preset-id>
    ```
-   Filter Warm Bass EQ:
+   Filter default Warm Bass EQ (`jokowo`):
    `highpass=f=75,equalizer=f=135:t=q:w=1.1:g=5.0,equalizer=f=240:t=q:w=1.2:g=2.5,equalizer=f=3200:t=q:w=1.4:g=-3.5,equalizer=f=5500:t=q:w=1.5:g=-3.0,acompressor=threshold=-18dB:ratio=3:attack=10:release=100,loudnorm=I=-16:TP=-1.5:LRA=11`
-   menghasilkan WAV 44.1 kHz 16-bit PCM mono di `public/audio/vo/`.
+   menghasilkan WAV 44.1 kHz 16-bit PCM mono di `public/audio/vo/<preset-id>/`.
 
 2. **Transkripsi Verbatim, Per-Beat Timing & Ekstraksi RMS 30fps (WAJIB)**:
    - **Wajib Verbatim Audio**: Dengarkan/verifikasi isi rekaman audio aktual terlebih dahulu. Seluruh teks `beat.dialogue` wajib **100% cocok kata per kata** dengan ucapan narator asli — **dilarang** menyingkat kalimat, menghilangkan kata, menambah kata ganda, atau mengulang kata yang sama bersamaan di `speechBubble` dan `Caption`.
    - **Wajib `durationInFrames` per Beat**: Jalankan FFmpeg `silencedetect` untuk mengunci `durationInFrames` masing-masing beat sesuai jeda dan tempo bicara asli. **Dilarang** mengandalkan pembagian rata (`scene.durationInFrames / totalBeats`) karena pasti membuat teks melenceng dari suara.
-   - **Wajib Ekstraksi RMS per Frame (Shorts & Long)**: Hitung amplitudo energi suara per frame 30fps dari master WAV (misal via `scripts/extract-rms.mjs` atau `extractSpeechFramesFromWav()` di `long-audio-mix.ts`) dan simpan ke `episode.rmsFrames` agar gerak bibir `Jokowo` (`mouthOpen`) dan equalizer HUD bergerak mengikuti silabel dan jeda hening suara asli secara presisi.
+   - **Wajib Ekstraksi RMS per Frame (Shorts & Long)**: Hitung amplitudo energi suara per frame 30fps dari master WAV via `node scripts/extract-rms.mjs --preset=<preset-id> --episode=<slug> --type=shorts` (atau `extractSpeechFramesFromWav()` di `long-audio-mix.ts`) dan simpan ke `rms.ts` (`episode.rmsFrames`) agar gerak bibir maskot (`mouthOpen`) dan equalizer HUD bergerak mengikuti silabel dan jeda hening suara asli secara presisi.
+   - **Registrasi Episode & Preset**: Simpan file episode di `src/episodes/<preset-id>/{shorts,long}/`, set `preset: "<preset-id>"`, dan daftarkan di `src/episodes/registry.ts`.
    - **Penjadwalan SFX Presisi**: Di `ShortsAudioMix` / `LongAudioMix`, setiap efek suara **wajib dibungkus `<Sequence from={cue.frame}>`** agar bunyi tepat di momen beat-nya (tidak menumpuk di frame 0). Gunakan `beat.sfxLabel` untuk pop-out teks komik kontekstual (`"CRASH!"`, `"ZAP!"`, `"MACET!"`) alih-alih menampilkan nama file SFX mentah.
 
 3. **Quality Gates (Wajib Lulus Sebelum Render Final)**:
    - Wajib lulus tanpa error maupun warning:
-     - PowerShell Windows: `npm test ; npm run lint`
-     - Bash/Zsh: `npm test && npm run lint`
-   - Render preview still (`npx remotion still`) mencakup **seluruh tema yang dipakai**, momen **kamera zoom maksimum**, pose kunci (`thinking`, `celebrating`, `pointing`, `walking`), serta **thumbnail**.
+     - PowerShell Windows: `npx tsc --noEmit ; npm test ; npm run lint`
+     - Bash/Zsh: `npx tsc --noEmit && npm test && npm run lint`
+   - Render preview still (`npx remotion still <preset>-shorts-<slug> ...`) mencakup **seluruh tema yang dipakai**, momen **kamera zoom maksimum**, pose kunci (`thinking`, `celebrating`, `pointing`, `walking`), serta **thumbnail**.
    - Periksa sendiri seluruh gambar still hasil render: pastikan tidak ada teks terpotong, prop menyentuh progress bar/tepi atas, elemen menumpuk di atas teks penting, atau karakter bertabrakan dengan prop/caption.
    - Setelah 100% rapi, hapus file preview still sementara (`preview-*.png` / `still-*.png`).
 
-4. **Render Final Video**:
+4. **Render Final Video & Branding**:
    ```bash
-   npm run render -- --type=shorts --episode=<slug>
+   npm run render -- --preset=<preset-id> --type=shorts --episode=<slug>
    # atau
-   npm run render -- --type=long --episode=<slug>
+   npm run render -- --preset=<preset-id> --type=long --episode=<slug>
+   # atau aset channel (banner & avatar)
+   npm run render -- --preset=<preset-id> --type=branding
    ```
 
 5. **Wajib Tampilkan Paket Siap Upload di Chat Setiap Selesai Render (WAJIB TANPA KECUALI — Bedakan Shorts vs Long Video)**:
@@ -172,9 +204,14 @@ Video wajib hidup di setiap detik seperti animasi kartun panggung profesional (s
    - **Berjalan Otomatis Antar-Posisi**: Perpindahan `charX` yang signifikan otomatis memicu `pose: "walking"` dengan ayunan kaki/tangan dan pantulan tubuh di atas **lantai panggung 3D berbayangan** (`Scene.tsx`). Di awal episode, buka dengan Jokowo berjalan masuk ke panggung.
    - **Rig Ekspresif**: Gunakan lengan terartikulasi (pose `thinking` tangan di dagu, `talking` gestur dua tangan sinkron suara, `pointing` menunjuk tegas ke prop, `celebrating` kedua lengan terangkat tinggi ke atas, kedipan mata deterministik alami, serta anggukan kepala mengikuti irama suara).
 
-2. **Properti Adegan Interaktif Multi-Elemen (`src/components/StageProp.tsx`)**:
+2. **Properti Adegan Interaktif Multi-Elemen (`src/components/StageProp.tsx`) & Dynamic Focus (`beat.propFocus`)**:
    - Setiap episode **wajib menghadirkan properti adegan ilustratif multi-elemen yang bergerak** (`beat.stageProp` + `beat.propVariant`) yang memerankan langsung makna kalimat narasi (misal: aplikasi crash ber-glitch, kalender flip berputar, mesin komputer meledak berasap, selotip menempel di logbook + stempel membanting, kartu perbandingan VS, RAM dengan serangga kejepit, kartu komentar interaktif).
+   - Gunakan `beat.propFocus`:
+     - `"co-push"` (*sama-sama maju*): prop dan maskot sama-sama maju mendekati kamera sambil maskot melirik/menunjuk ke prop.
+     - `"hero-pop"` (*pattern interrupt singkat*): prop maju melewati depan maskot dengan bayangan 3D & *rack focus blur* pada maskot, lalu otomatis mundur kembali ke atas sebelum beat berakhir.
+     - `"normal"` (default): framing stabil.
    - Gunakan `propVariant` agar satu `stageProp` yang sama bisa berevolusi secara kontinu lintas beberapa beat berturut-turut tanpa me-reset animasi dasarnya.
+   - **Hybrid Real Media Asset (`src/components/AnimatedMediaCard.tsx`)**: Bila episode membahas produk, hardware, angka seri, atau dokumen fisik nyata (mis. perbandingan prosesor asli `i5-14400` vs `i5-14400F`), tampilkan foto asli lewat Remotion `<Img src={staticFile(...)} />` yang dibungkus `AnimatedMediaCard` di `public/assets/episodes/<slug>/` (dengan frame studio, gerak 3D *tilt/float* deterministik, kilau metalik, serta `highlightSpot` lingkaran vektor tepat di atas angka/huruf kunci + panah callout) agar tampak autentik sekaligus menyatu dengan gaya motion graphic.
    - Hindari hanya mengandalkan 1 ikon kecil generik (`Prop.tsx`) untuk episode utama.
 
 3. **Koreografi Kamera & Safe-Zone Vertikal Shorts (1080×1920)**:

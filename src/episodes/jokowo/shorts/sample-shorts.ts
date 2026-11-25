@@ -1,9 +1,15 @@
-import type { EpisodeData } from "./types";
+import type { EpisodeData } from "../../types";
 
 export const sampleShortsEpisode: EpisodeData = {
   id: "shorts-kopi-luwak",
   slug: "kopi-luwak-enzim",
   title: "Rahasia Ilmiah Kopi Luwak!",
+  preset: "jokowo",
+  thumbnail: {
+    title: "RAHASIA ILMIAH KOPI LUWAK!",
+    subtitle: "FAKTA ENZIM ALAMI!",
+    floatingProps: ["flask", "atom", "question-mark", "lightbulb"],
+  },
   facts: [
     {
       claim: "Enzim proteolitik dalam saluran pencernaan luwak memecah protein kopi sehingga mengurangi rasa pahit secara signifikan.",

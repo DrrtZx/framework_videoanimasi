@@ -2,6 +2,10 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { FONTS } from "../fonts";
 import type { StagePropType } from "../episodes/types";
+import { AnimatedMediaCard } from "./AnimatedMediaCard";
+
+const CPU_14400_ASSET = "assets/episodes/cpu-igpu-vs-non-igpu/intel-i5-14400.jpg";
+const CPU_14400F_ASSET = "assets/episodes/cpu-igpu-vs-non-igpu/intel-i5-14400f.jpg";
 
 export interface StagePropProps {
   type: StagePropType;
@@ -1182,28 +1186,22 @@ export const StageProp: React.FC<StagePropProps> = ({
           : 0;
 
         if (!isTwoWorkers) {
-          // Variant "compare-q": Perbandingan awal CPU + iGPU vs Tanpa iGPU
+          // Variant "compare-q": Perbandingan awal CPU + iGPU vs Tanpa iGPU dengan foto chip asli
           return (
             <g>
-              {/* Kiri: CPU + iGPU */}
-              <rect x="90" y="95" width="250" height="260" rx="22" fill="#0F172A" stroke="#00F5FF" strokeWidth="6" />
-              <rect x="118" y="122" width="194" height="90" rx="12" fill="#0284C7" stroke="#E0F2FE" strokeWidth="3" />
-              <text x="215" y="177" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
-              <rect x="118" y="232" width="194" height="92" rx="12" fill="#10B981" stroke="#FEF08A" strokeWidth="4" />
-              <text x="215" y="274" fontFamily={FONTS.title} fontSize="30" fontWeight="900" fill="#0F172A" textAnchor="middle">+ iGPU</text>
-              <text x="215" y="306" fontFamily={FONTS.label} fontSize="17" fontWeight="800" fill="#ECFDF5" textAnchor="middle">ADA GRAFIS</text>
+              {/* Kartu Kiri: Intel i5-14400 (Dengan iGPU) */}
+              <rect x="55" y="42" width="305" height="366" rx="26" fill="#0A1628" stroke="#10B981" strokeWidth="5.5" />
+              <rect x="82" y="58" width="251" height="40" rx="12" fill="#10B981" />
+              <text x="207.5" y="85" fontFamily={FONTS.title} fontSize="21" fontWeight="900" fill="#0F172A" textAnchor="middle">INTEL i5-14400</text>
+              <rect x="82" y="336" width="251" height="52" rx="14" fill="#064E3B" stroke="#34D399" strokeWidth="3" />
+              <text x="207.5" y="370" fontFamily={FONTS.title} fontSize="23" fontWeight="900" fill="#FACC15" textAnchor="middle">✓ ADA iGPU</text>
 
-              {/* Tengah: VS / ? */}
-              <circle cx="400" cy="225" r="42" fill="#FACC15" stroke="#0F172A" strokeWidth="5" />
-              <text x="400" y="238" fontFamily={FONTS.title} fontSize="42" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
-
-              {/* Kanan: CPU Tanpa iGPU */}
-              <rect x="460" y="95" width="250" height="260" rx="22" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
-              <rect x="488" y="122" width="194" height="90" rx="12" fill="#334155" stroke="#94A3B8" strokeWidth="3" />
-              <text x="585" y="177" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
-              <rect x="488" y="232" width="194" height="92" rx="12" fill="#1E293B" stroke="#F43F5E" strokeWidth="3.5" strokeDasharray="10 8" />
-              <text x="585" y="276" fontFamily={FONTS.title} fontSize="26" fontWeight="900" fill="#FB7185" textAnchor="middle">TANPA iGPU</text>
-              <text x="585" y="306" fontFamily={FONTS.label} fontSize="17" fontWeight="800" fill="#94A3B8" textAnchor="middle">KOSONG</text>
+              {/* Kartu Kanan: Intel i5-14400F (Tanpa iGPU) */}
+              <rect x="440" y="42" width="305" height="366" rx="26" fill="#0A1628" stroke="#F43F5E" strokeWidth="5.5" />
+              <rect x="467" y="58" width="251" height="40" rx="12" fill="#F43F5E" />
+              <text x="592.5" y="85" fontFamily={FONTS.title} fontSize="21" fontWeight="900" fill="#FFFFFF" textAnchor="middle">INTEL i5-14400F</text>
+              <rect x="467" y="336" width="251" height="52" rx="14" fill="#4C0519" stroke="#FB7185" strokeWidth="3" />
+              <text x="592.5" y="370" fontFamily={FONTS.title} fontSize="23" fontWeight="900" fill="#FB7185" textAnchor="middle">✖ TANPA iGPU</text>
             </g>
           );
         }
@@ -1310,9 +1308,6 @@ export const StageProp: React.FC<StagePropProps> = ({
       case "cpu-f-disabled": {
         const isDisabled = variant === "disabled" || variant === "blind-mobo";
         const isBlind = variant === "blind-mobo";
-        const stampScale = isDisabled
-          ? spring({ frame: beatFrame, fps, config: { damping: 9, stiffness: 230 } })
-          : 0;
         const warnScale = isBlind
           ? spring({ frame: beatFrame, fps, config: { damping: 10, stiffness: 210 } })
           : 0;
@@ -1360,36 +1355,34 @@ export const StageProp: React.FC<StagePropProps> = ({
           );
         }
 
-        // Variant "f-chip" / "disabled": Chip CPU Seri F dengan blok iGPU disilang & digembok
+        // Variant "f-chip" / "disabled": Panel showcase foto i5-14400F asli + Seri F + Blok iGPU
         return (
           <g>
-            {/* Pin-pin Emas */}
-            {[220, 270, 320, 370, 420, 470, 520, 570].map((px) => (
-              <g key={px}>
-                <rect x={px - 6} y="42" width="12" height="22" rx="3" fill="#FACC15" />
-                <rect x={px - 6} y="386" width="12" height="22" rx="3" fill="#FACC15" />
-              </g>
-            ))}
-            {/* Badan Chip */}
-            <rect x="180" y="64" width="440" height="322" rx="26" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
-            {/* Bagian Atas: CPU Core + Badge F */}
-            <rect x="210" y="92" width="240" height="120" rx="14" fill="#1E293B" stroke="#38BDF8" strokeWidth="4" />
-            <text x="330" y="160" fontFamily={FONTS.title} fontSize="36" fontWeight="900" fill="#FFFFFF" textAnchor="middle">CPU CORE</text>
-            <rect x="468" y="92" width="122" height="120" rx="14" fill="#FACC15" stroke="#0F172A" strokeWidth="4" />
-            <text x="529" y="168" fontFamily={FONTS.title} fontSize="72" fontWeight="900" fill="#0F172A" textAnchor="middle">F</text>
-            <text x="529" y="198" fontFamily={FONTS.label} fontSize="16" fontWeight="900" fill="#7F1D1D" textAnchor="middle">SERI F</text>
+            <rect x="48" y="36" width="704" height="378" rx="28" fill="#0B1324" fillOpacity="0.94" stroke="#F43F5E" strokeWidth="5" />
+            <rect x="76" y="356" width="250" height="40" rx="12" fill="#1E293B" stroke="#38BDF8" strokeWidth="2.5" />
+            <text x="201" y="382" fontFamily={FONTS.label} fontSize="17" fontWeight="900" fill="#E0F2FE" textAnchor="middle">INTEL CORE i5-14400F</text>
 
-            {/* Bagian Bawah: Blok iGPU */}
-            <rect x="210" y="234" width="380" height="122" rx="16" fill={isDisabled ? "#4C0519" : "#1E293B"} stroke="#F43F5E" strokeWidth="4.5" strokeDasharray="12 8" />
-            <text x="400" y="305" fontFamily={FONTS.title} fontSize="42" fontWeight="900" fill="#94A3B8" textAnchor="middle">BLOK iGPU</text>
+            {/* Kartu Kanan Atas: Penjelasan Akhiran F */}
+            <rect x="375" y="68" width="348" height="122" rx="18" fill="#1E293B" stroke="#FACC15" strokeWidth="4" />
+            <rect x="393" y="86" width="84" height="86" rx="14" fill="#FACC15" />
+            <text x="435" y="148" fontFamily={FONTS.title} fontSize="58" fontWeight="900" fill="#0F172A" textAnchor="middle">F</text>
+            <text x="494" y="122" fontFamily={FONTS.title} fontSize="23" fontWeight="900" fill="#FACC15" textAnchor="start">SERI AKHIRAN &quot;F&quot;</text>
+            <text x="494" y="156" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#E2E8F0" textAnchor="start">Wajib VGA Eksternal</text>
 
-            {/* Stempel Silang Merah "DIMATIKAN!" */}
-            {isDisabled && (
-              <g transform={`translate(400, 295) scale(${stampScale}) rotate(-6) translate(-400, -295)`}>
-                <rect x="235" y="252" width="330" height="86" rx="14" fill="#F43F5E" stroke="#FFFFFF" strokeWidth="5" />
-                <text x="400" y="310" fontFamily={FONTS.title} fontSize="44" fontWeight="900" fill="#FFFFFF" textAnchor="middle">DIMATIKAN!</text>
-              </g>
-            )}
+            {/* Kartu Kanan Bawah: Blok iGPU */}
+            <rect
+              x="375"
+              y="218"
+              width="348"
+              height="176"
+              rx="18"
+              fill={isDisabled ? "#4C0519" : "#172554"}
+              stroke="#F43F5E"
+              strokeWidth="4.5"
+              strokeDasharray="10 7"
+            />
+            <text x="549" y="296" fontFamily={FONTS.title} fontSize="36" fontWeight="900" fill="#CBD5E1" textAnchor="middle">BLOK iGPU</text>
+            <text x="549" y="336" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Grafis di dalam chip</text>
           </g>
         );
       }
@@ -1531,27 +1524,27 @@ export const StageProp: React.FC<StagePropProps> = ({
         if (variant === "price-compare") {
           return (
             <g>
-              {/* Kartu Kiri: CPU + iGPU */}
-              <rect x="85" y="75" width="285" height="300" rx="24" fill="#0F172A" stroke="#10B981" strokeWidth="6" />
-              <rect x="112" y="98" width="231" height="52" rx="12" fill="#10B981" />
-              <text x="227" y="133" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#0F172A" textAnchor="middle">CPU + iGPU</text>
-              <text x="227" y="205" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Langsung Nyala</text>
-              <text x="227" y="252" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Ban Serep VGA</text>
-              <text x="227" y="299" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FACC15" textAnchor="middle">✓ Quick Sync Video</text>
-              <text x="227" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Harga sedikit lebih tinggi</text>
+              {/* Kartu Kiri: Intel i5-14400 (Dengan iGPU) */}
+              <rect x="50" y="40" width="315" height="370" rx="24" fill="#0F172A" stroke="#10B981" strokeWidth="6" />
+              <text x="257" y="94" fontFamily={FONTS.title} fontSize="27" fontWeight="900" fill="#FFFFFF" textAnchor="middle">i5-14400</text>
+              <rect x="176" y="108" width="162" height="36" rx="10" fill="#10B981" />
+              <text x="257" y="133" fontFamily={FONTS.title} fontSize="20" fontWeight="900" fill="#0F172A" textAnchor="middle">ADA iGPU</text>
+              <line x1="74" y1="168" x2="341" y2="168" stroke="#1E293B" strokeWidth="2.5" />
+              <text x="207.5" y="210" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Langsung Nyala</text>
+              <text x="207.5" y="254" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FFFFFF" textAnchor="middle">✓ Ban Serep VGA</text>
+              <text x="207.5" y="298" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FACC15" textAnchor="middle">✓ Quick Sync Video</text>
+              <text x="207.5" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Harga sedikit lebih tinggi</text>
 
-              {/* VS Tengah */}
-              <circle cx="400" cy="225" r="38" fill="#FACC15" stroke="#0F172A" strokeWidth="5" />
-              <text x="400" y="238" fontFamily={FONTS.title} fontSize="34" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
-
-              {/* Kartu Kanan: CPU Tanpa iGPU */}
-              <rect x="430" y="75" width="285" height="300" rx="24" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
-              <rect x="457" y="98" width="231" height="52" rx="12" fill="#F43F5E" />
-              <text x="572" y="133" fontFamily={FONTS.title} fontSize="28" fontWeight="900" fill="#FFFFFF" textAnchor="middle">SERI F (NO iGPU)</text>
-              <text x="572" y="205" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#34D399" textAnchor="middle">✓ Harga Lebih Murah</text>
-              <text x="572" y="252" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Wajib VGA Eksternal</text>
-              <text x="572" y="299" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Tanpa Ban Serep</text>
-              <text x="572" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Performa gaming sama</text>
+              {/* Kartu Kanan: Intel i5-14400F (Tanpa iGPU) */}
+              <rect x="435" y="40" width="315" height="370" rx="24" fill="#0F172A" stroke="#F43F5E" strokeWidth="6" />
+              <text x="642" y="94" fontFamily={FONTS.title} fontSize="27" fontWeight="900" fill="#FFFFFF" textAnchor="middle">i5-14400F</text>
+              <rect x="561" y="108" width="162" height="36" rx="10" fill="#F43F5E" />
+              <text x="642" y="133" fontFamily={FONTS.title} fontSize="19" fontWeight="900" fill="#FFFFFF" textAnchor="middle">TANPA iGPU</text>
+              <line x1="459" y1="168" x2="726" y2="168" stroke="#1E293B" strokeWidth="2.5" />
+              <text x="592.5" y="210" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#34D399" textAnchor="middle">✓ Harga Lebih Murah</text>
+              <text x="592.5" y="254" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Wajib VGA Eksternal</text>
+              <text x="592.5" y="298" fontFamily={FONTS.label} fontSize="22" fontWeight="800" fill="#FB7185" textAnchor="middle">✖ Tanpa Ban Serep</text>
+              <text x="592.5" y="348" fontFamily={FONTS.label} fontSize="18" fontWeight="800" fill="#94A3B8" textAnchor="middle">Performa gaming sama</text>
             </g>
           );
         }
@@ -1610,12 +1603,202 @@ export const StageProp: React.FC<StagePropProps> = ({
     }
   };
 
+  const ringProgress = spring({
+    frame: Math.max(0, propFrame - 8),
+    fps,
+    config: { damping: 14, stiffness: 185 },
+  });
+  const calloutProgress = spring({
+    frame: Math.max(0, propFrame - 12),
+    fps,
+    config: { damping: 14, stiffness: 190 },
+  });
+
+  const renderMediaOverlay = () => {
+    if (type === "cpu-igpu-office" && variant !== "two-workers" && variant !== "ram-display") {
+      return (
+        <>
+          <AnimatedMediaCard
+            assetPath={CPU_14400_ASSET}
+            x={114}
+            y={110}
+            width={186}
+            height={212}
+            borderColor="#34D399"
+            glowColor="rgba(16, 185, 129, 0.45)"
+            tiltAmp={3.2}
+            phaseOffset={0}
+          />
+          <AnimatedMediaCard
+            assetPath={CPU_14400F_ASSET}
+            x={499}
+            y={110}
+            width={186}
+            height={212}
+            borderColor="#FB7185"
+            glowColor="rgba(244, 63, 94, 0.45)"
+            tiltAmp={3.2}
+            phaseOffset={1.6}
+            highlightSpot={{
+              xPct: 74.2,
+              yPct: 51.5,
+              radiusPct: 11,
+              color: "#FACC15",
+              glowColor: "#F43F5E",
+              progress: ringProgress,
+              pulse: true,
+            }}
+          />
+        </>
+      );
+    }
+
+    if (type === "cpu-f-disabled" && variant !== "blind-mobo") {
+      return (
+        <AnimatedMediaCard
+          assetPath={CPU_14400F_ASSET}
+          x={76}
+          y={68}
+          width={250}
+          height={278}
+          borderColor="#F43F5E"
+          glowColor="rgba(244, 63, 94, 0.5)"
+          borderWidth={4}
+          borderRadius={18}
+          tiltAmp={3.5}
+          phaseOffset={0.4}
+          highlightSpot={{
+            xPct: 74.2,
+            yPct: 51.5,
+            radiusPct: 10.8,
+            color: "#FACC15",
+            glowColor: "#F43F5E",
+            progress: ringProgress,
+            pulse: true,
+          }}
+        />
+      );
+    }
+
+    if (type === "cpu-vs-cta" && variant === "price-compare") {
+      return (
+        <>
+          <AnimatedMediaCard
+            assetPath={CPU_14400_ASSET}
+            x={68}
+            y={56}
+            width={86}
+            height={98}
+            borderColor="#34D399"
+            glowColor="rgba(16, 185, 129, 0.35)"
+            borderWidth={3}
+            borderRadius={12}
+            tiltAmp={2.2}
+            phaseOffset={0}
+          />
+          <AnimatedMediaCard
+            assetPath={CPU_14400F_ASSET}
+            x={453}
+            y={56}
+            width={86}
+            height={98}
+            borderColor="#FB7185"
+            glowColor="rgba(244, 63, 94, 0.35)"
+            borderWidth={3}
+            borderRadius={12}
+            tiltAmp={2.2}
+            phaseOffset={1.4}
+            highlightSpot={{
+              xPct: 74.2,
+              yPct: 51.5,
+              radiusPct: 13,
+              color: "#FACC15",
+              glowColor: "#F43F5E",
+              progress: 1,
+              pulse: true,
+            }}
+          />
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  const renderForegroundOverlay = () => {
+    if (type === "cpu-igpu-office" && variant !== "two-workers" && variant !== "ram-display") {
+      return (
+        <g>
+          <circle cx="400" cy="225" r="42" fill="#FACC15" stroke="#0F172A" strokeWidth="6" />
+          <text x="400" y="239" fontFamily={FONTS.title} fontSize="40" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
+        </g>
+      );
+    }
+
+    if (type === "cpu-f-disabled" && variant !== "blind-mobo") {
+      const isDisabled = variant === "disabled";
+      const stampScale = isDisabled
+        ? spring({ frame: beatFrame, fps, config: { damping: 9, stiffness: 230 } })
+        : 0;
+      const arrowHeadOpacity = Math.max(0, Math.min(1, (calloutProgress - 0.35) / 0.65));
+      return (
+        <g>
+          {/* Garis panah callout dari lingkaran F ke kartu SERI AKHIRAN "F" */}
+          <path
+            d="M 289 211 Q 328 136 366 129"
+            fill="none"
+            stroke="#0F172A"
+            strokeWidth="9"
+            strokeLinecap="round"
+            strokeDasharray={145}
+            strokeDashoffset={145 * (1 - calloutProgress)}
+            opacity="0.7"
+          />
+          <path
+            d="M 289 211 Q 328 136 366 129"
+            fill="none"
+            stroke="#FACC15"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={145}
+            strokeDashoffset={145 * (1 - calloutProgress)}
+          />
+          <circle cx="289" cy="211" r="6" fill="#FACC15" stroke="#0F172A" strokeWidth="2.5" opacity={calloutProgress} />
+          <polygon
+            points="374,129 356,119 359,139"
+            fill="#FACC15"
+            stroke="#0F172A"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            opacity={arrowHeadOpacity}
+          />
+
+          {isDisabled && (
+            <g transform={`translate(549, 306) scale(${stampScale}) rotate(-7) translate(-549, -306)`}>
+              <rect x="395" y="264" width="308" height="84" rx="14" fill="#F43F5E" stroke="#FFFFFF" strokeWidth="5" />
+              <text x="549" y="320" fontFamily={FONTS.title} fontSize="40" fontWeight="900" fill="#FFFFFF" textAnchor="middle">DIMATIKAN!</text>
+            </g>
+          )}
+        </g>
+      );
+    }
+
+    if (type === "cpu-vs-cta" && variant === "price-compare") {
+      return (
+        <g>
+          <circle cx="400" cy="225" r="36" fill="#FACC15" stroke="#0F172A" strokeWidth="5" />
+          <text x="400" y="237" fontFamily={FONTS.title} fontSize="32" fontWeight="900" fill="#0F172A" textAnchor="middle">VS</text>
+        </g>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        position: "relative",
         transform: `translateY(${enterY + floatY}px) scale(${enterScale * variantScale})`,
         transformOrigin: "center center",
         width: "820px",
@@ -1629,9 +1812,37 @@ export const StageProp: React.FC<StagePropProps> = ({
         height={460}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ overflow: "visible" }}
+        style={{ display: "block", position: "relative", zIndex: 1, overflow: "visible" }}
       >
         {renderIllustration()}
+      </svg>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 2,
+        }}
+      >
+        {renderMediaOverlay()}
+      </div>
+
+      <svg
+        viewBox="0 0 800 450"
+        width={820}
+        height={460}
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          overflow: "visible",
+          zIndex: 3,
+        }}
+      >
+        {renderForegroundOverlay()}
       </svg>
     </div>
   );
